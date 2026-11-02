@@ -1,0 +1,38 @@
+# Specification Quality Checklist: khi — terminal, LOAD and SAVE from VS Code
+
+**Purpose**: Validate specification completeness and quality before proceeding to planning
+**Created**: 2026-11-02
+**Feature**: [spec.md](../spec.md)
+
+## Content Quality
+
+- [ ] No implementation details (languages, frameworks, APIs)
+- [x] Focused on user value and business needs
+- [ ] Written for non-technical stakeholders
+- [x] All mandatory sections completed
+
+## Requirement Completeness
+
+- [x] No [NEEDS CLARIFICATION] markers remain
+- [x] Requirements are testable and unambiguous
+- [x] Success criteria are measurable
+- [x] Success criteria are technology-agnostic (no implementation details)
+- [x] All acceptance scenarios are defined
+- [x] Edge cases are identified
+- [x] Scope is clearly bounded
+- [x] Dependencies and assumptions identified
+
+## Feature Readiness
+
+- [x] All functional requirements have clear acceptance criteria
+- [x] User scenarios cover primary flows
+- [x] Feature meets measurable outcomes defined in Success Criteria
+- [ ] No implementation details leak into specification
+
+## Notes
+
+- Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
+- 13 of 16 items pass after one revision. That revision added acceptance scenarios for FR-013, FR-020, FR-026, FR-028 and FR-032, which had none.
+- **The three open items are deliberate and need no spec update.**
+  - *No implementation details* (listed twice): FR-001 names .NET 10 and the three projects, and the invariants name the stand-in, sockets and temporary file. The Architect's request asks for these, and Articles I, V, VI and XV require them. Removing them would remove the request.
+  - *Written for non-technical stakeholders*: The readers are the Architect and robot programmers, so AS, LOAD, SAVE and telnet are used without explanation.
