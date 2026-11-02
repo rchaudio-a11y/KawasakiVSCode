@@ -20,25 +20,35 @@ requires written justification in the active plan. One class, module, interface 
 ### Article II — Files Are Opaque
 
 The tool moves AS files byte for byte. It never parses, rewrites, reformats or validates AS source;
-what it reports about a file's content is what the controller said about it.
+what it reports about a file's content is what the controller said about it. One exception: when the
+person chooses khi load --replace, the tool reads the program names from the file's .PROGRAM header
+lines — those lines and nothing else, never a program body — to know which programs it is replacing.
 
 **Rationale:** The controller is the authority on AS source; a tool that interprets it can corrupt or contradict it.
 
 ### Article III — The Person Commands the Robot
 
-The only controller commands the tool issues on its own are the login and the command of the verb
-being run (LOAD or SAVE with its qualifier). Everything else it sends is either protocol traffic
-governed by Article IV — telnet negotiation replies and transfer framing — or content it passes
-through unchanged: the bytes of the file being loaded (Article II) and what the person types in the
-terminal verb. In the terminal verb it adds no command. No path issues motion, execution, motor
+The only controller commands the tool issues on its own are the login, the command of the verb being
+run (LOAD or SAVE with its qualifier), and — only when the person chooses khi load --replace —
+DELETE/P for each program the file's .PROGRAM lines name (Article II), and no others. DELETE/P removes
+the program alone, never the subroutines or variables it uses (AS Language Reference Manual §5.2).
+Under --replace, if the controller refuses any delete, nothing is loaded; and the output names every
+program deleted, whether the load then succeeds or fails. A reply that the program does not exist
+(P1038) is not a refusal; that program simply loads. If the controller asks to confirm a DELETE/P,
+the tool confirms it for that program only, as the capture shows. Any other question from the
+controller during --replace stops before LOAD, and the output names every program already deleted.
+Everything else the tool sends is either
+protocol traffic governed by Article IV — telnet negotiation replies and transfer framing — or content
+it passes through unchanged: the bytes of the file being loaded (Article II) and what the person types
+in the terminal verb. In the terminal verb it adds no command. No path issues motion, execution, motor
 power, error reset or any other controller command the person did not type.
 
-**Rationale:** A robot can hurt people and damage equipment, so every command beyond the login and the verb's own comes from a person.
+**Rationale:** A robot can hurt people and damage equipment, so the person decides what reaches it, by typing it or by choosing --replace.
 
 ### Article IV — Recorded Protocol Only
 
 Every byte sequence the tool itself originates or waits for — telnet negotiation, the login, the
-verb's command, and the transfer framing around a file — is backed by a captured exchange with a real
+verb's command, the DELETE/P commands under --replace, and the transfer framing around a file — is backed by a captured exchange with a real
 Kawasaki terminal session (KRterm against K-ROSET or a controller), checked into the test project
 with a note of what was captured, against what, and when. A behaviour with no capture behind it is
 not implemented. The bytes of a file being loaded (Article II) and what the person types in the
@@ -168,7 +178,7 @@ Every plan, task list and implementation review verifies:
 - Option settings present in every touched project file.
 - Every byte sequence the tool originates or awaits traces to a checked-in capture; file content and typed input are outside the check (Art. IV).
 - Every command, qualifier and controller message relied on cites a manual number and section (Art. XVI).
-- No path issues a controller command other than login and the running verb's own command (Art. III), asserted by a test that records every command sent across all verbs and compares it to the allowed set; LOAD's file content is checked separately, byte for byte against the file on disk.
+- No path issues a controller command other than login, the running verb's own command and, under load --replace, DELETE/P for the programs the file's .PROGRAM lines name (Art. III), asserted by a test that records every command sent across all verbs and compares it to the allowed set; without --replace, no DELETE/P is ever sent; under --replace, a refused delete loads nothing and every deleted program is named in the output; a P1038 reply proceeds to LOAD, and an unexpected question sends no LOAD; LOAD's file content is checked separately, byte for byte against the file on disk.
 - Every new guard carries its fire demonstration (Art. VII) and a production-route test (Art. XIII).
 - No rule validated at two doors.
 - Every wait during connect, login and transfer has a timeout, and the terminal relay after login is the only unbounded wait (Art. X).
@@ -183,4 +193,8 @@ approval, a dated entry with rationale, and the migration path for code the chan
 compliance. Versioning: MAJOR for removed or redefined principles, MINOR for new articles or expanded
 obligations, PATCH for wording.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-02 | **Last Amended**: 2026-11-02
+### Amendments
+
+- **2026-11-02, 1.0.0 to 2.0.0.** Architect approval: given. Rationale: edit-and-reload: LOAD refuses a program name already in memory (AS Language Reference Manual §5.3), so the person can choose to replace; replacement deletes with DELETE/P only (§5.2). Migration path: none — nothing is built.
+
+**Version**: 2.0.0 | **Ratified**: 2026-11-02 | **Last Amended**: 2026-11-02
