@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(//c/Users/rchau/OneDrive/Documents/_MemOS/RCH Automation LLC/Manuals/**)"
+    ]
+  }
+}
