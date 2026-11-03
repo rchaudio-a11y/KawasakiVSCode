@@ -1,0 +1,63 @@
+# Quickstart: validating khi
+
+How to show the feature works, from the capture route through acceptance in VS Code. It points to the contracts rather than repeating them.
+
+## Prerequisites
+
+- Windows 11 with the .NET SDK 10 (10.0.401 is installed here).
+- K-ROSET 1.8.6.19269 with a project that has one robot inserted. Its first robot answers at 127.0.0.1:9105 (K-IDE manual 2.5.4).
+- KRterm 1.2.8 at `C:\KawasakiRobot\KRterm\`.
+- VS Code with this repository, and a scratch program repository for P3.
+
+## P0 Prove the capture route
+
+FR-005. This is done together, once, before any capture: the Architect runs K-ROSET and KRterm, and the agent runs the relay. Captures (a) to (k) follow in the same session.
+
+1. **Architect**: Start K-ROSET with its robot. **Agent**: Confirm something is listening on 127.0.0.1:9105, and that `tools\Test-CaptureRelay.ps1` passes.
+2. **Agent**: Start the relay. `<free port>` is any unused local port. The relay serves one KRterm connection and exits when it closes.
+
+   ```powershell
+   tools\Start-CaptureRelay.ps1 -ListenPort <free port> -TargetHost 127.0.0.1 -TargetPort 9105 -OutFile $env:TEMP\route-proof\exchange.txt
+   ```
+
+3. **Architect**: In KRterm, add a TCP connection to 127.0.0.1 on `<free port>`, connect, and type `as` at `login: `.
+4. **Pass when**:
+   - KRterm reaches the `>` prompt.
+   - `exchange.txt` holds `S` records with the login prompt and `C` records with `as`.
+   - A second connection made straight to 9105 shows the same prompt.
+5. **Agent**: Record the result under R1 in `research.md`. This proof is not a capture and is not checked in.
+
+## P1 Take the captures
+
+These are FR-002, FR-003 and FR-036's captures (a) to (k), each through the relay, in the same session as P0. The Architect drives KRterm. The agent starts one relay run per capture, writing straight into that capture's folder, and drafts each note for the Architect to confirm.
+
+1. **Before the first capture**, check that `.gitattributes` marks `Captures/**` and `Fixtures/**` as `-text`.
+2. **For each capture**, create its folder and `note.md`, laid out as [contracts/capture-format.md](contracts/capture-format.md) shows, and put any file KRterm wrote or read in `files/`.
+3. **For (k)**, record DELETE/P on a program that is present, one that is absent (P1038), one the controller refuses (in execution or selected), and any confirmation it asks for.
+4. **A case K-ROSET cannot produce** is recorded in the note as not produced, and its behaviour stays unimplemented (FR-003).
+
+## P2 Build and test
+
+```powershell
+dotnet build KawasakiVSCode.slnx
+dotnet test KawasakiVSCode.slnx
+```
+
+**Expected**: every test passes. Every guard in [contracts/test-guards.md](contracts/test-guards.md) has its fire record in its test file.
+
+## P3 Acceptance in VS Code
+
+INV-8 and User Story 6, against K-ROSET.
+
+1. Publish khi to a folder on the PATH and copy `templates/tasks.json` into the scratch repository's `.vscode/`, as the README shows. Add a `khi.robots.json` naming K-ROSET's robot as the default ([contracts/robots-file.md](contracts/robots-file.md)).
+2. Run *khi: Save controller to file*, pick **full**, and name the file. **Expected**: the file exists and the result line says `ok`.
+3. Open that file and run *khi: Replace from current file*. **Expected**: the output names the programs deleted, the result line says `ok`, and the exit code is 0.
+4. Save full again to a second file. **Expected**: the two files match except for the stamped lines, which the implementation lists once the first acceptance run shows them.
+5. Run *khi: Open terminal*. **Expected**:
+   - The `>` prompt appears.
+   - Ctrl+C cancels a half-typed line at the prompt.
+   - A typed `SAVE x.as` writes `x.as` into the scratch repository's folder.
+   - Ctrl+] ends the session with exit code 0.
+   - If Ctrl+] or an AS control key does not reach khi, check `terminal.integrated.sendKeybindingsToShell` and report what was needed.
+6. Edit a program to hold a syntax error and run *khi: Load current file*. **Expected**: the controller's text in the output, and the Problems list showing the named line, or the file where no line is named.
+7. Close the terminal panel during a `khi term` session. **Expected**: khi exits without leaving a process running (research R8).
