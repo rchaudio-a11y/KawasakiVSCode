@@ -21,10 +21,15 @@
 
 ### Session 2026-11-02
 
-- Q: How does a person reload an edited program the controller already holds? → A: With `khi load --replace`, in this feature. The person chooses it; khi reads the program names from the file's `.PROGRAM` header lines (Article II, v1.1.0) and replaces those programs in controller memory by the mechanism a capture shows. Without `--replace`, a name already in memory fails with the controller's words.
+- Q: How does a person reload an edited program the controller already holds? → A: With `khi load --replace`, in this feature. The person chooses it; khi reads the program names from the file's `.PROGRAM` header lines (Article II, v2.0.0) and replaces those programs with DELETE/P for each name, then LOAD (Article III, v2.0.0). Without `--replace`, a name already in memory fails with the controller's words.
 - Q: What does `khi load` do when a rejected LOAD stops at a question? → A: It prints the question, answers nothing, closes the session and exits non-zero. The capture note records what stays in memory.
 - Q: What does the output carry when the controller names no line? → A: The output names the file and the problem matcher points at the file. No line is ever invented or translated from a step number. The plan brings the capture.
 - Q: Who gets Ctrl+C in `khi term`? → A: The controller; khi relays it, and it cancels the input line at the AS prompt. The session ends on Ctrl+], or when the console closes or its input ends.
+
+### Session 2026-11-03
+
+- Q: Under `--replace`, what happens when a program is not in memory, when the controller asks to confirm a DELETE/P, and when it asks anything else? → A: A P1038 reply is not a refusal; that program simply loads. A DELETE/P confirmation is confirmed for that program only, as the capture shows. Any other question stops before LOAD, and the output names every program already deleted (Article III, v2.0.0).
+- Q: How is the stop on an unexpected reply tested without guessing a question? → A: Under `--replace`, any reply to DELETE/P that is not one of the captured replies (present, absent/P1038, refused, and the confirmation if one is captured) stops before LOAD, and the output names every program already deleted. The test replays the DELETE/P capture with the reply altered and checks that no LOAD is sent.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -57,12 +62,14 @@ A robot programmer runs `khi load` on a program file and sees, in the controller
 1. **Given** a program whose name the controller does not hold, **When** the programmer runs `khi load <file>`, **Then** the file's bytes reach the controller unchanged, the controller's reply prints verbatim, one result line ends the output, and the exit code is zero.
 2. **Given** a program the controller rejects, **When** the programmer runs `khi load <file>`, **Then** the controller's text prints exactly, the output carries `<file>:<line>:` where the controller names a line and `<file>:` where it names none, and the exit code is non-zero.
 3. **Given** the controller stops to ask a question during the load, **When** that question arrives, **Then** khi prints it verbatim, sends no answer, closes the session, and exits non-zero.
-4. **Given** a program whose name is already in the controller's memory, **When** the programmer runs `khi load <file>` without `--replace`, **Then** the controller's refusal prints verbatim, the exit code is non-zero, and khi sends no replacement command.
+4. **Given** a program whose name is already in the controller's memory, **When** the programmer runs `khi load <file>` without `--replace`, **Then** the controller's refusal prints verbatim, the exit code is non-zero, and khi sends no DELETE/P.
 5. **Given** a file that does not exist, **When** the programmer runs `khi load <file>`, **Then** khi refuses by naming the file and does not connect.
 6. **Given** a load under way, **When** the connection drops or a wait times out, **Then** khi says the load did not finish and that the controller's memory may have changed, one result line states what was transferred, and the exit code is non-zero.
-7. **Given** an edited program whose name is already in the controller's memory, **When** the programmer runs `khi load <file> --replace`, **Then** khi sends the captured replacement commands for the programs the file's `.PROGRAM` lines name, then LOAD; the controller holds the file's version; one result line ends the output; and the exit code is zero.
-8. **Given** a `.PROGRAM` line naming a program not in memory, **When** the programmer runs `khi load <file> --replace`, **Then** that program loads without a replacement command, if the capture shows that is how it works.
-9. **Given** a program the controller will not let be replaced, **When** the programmer runs `khi load <file> --replace`, **Then** the controller's refusal prints verbatim, khi sends no LOAD and does nothing to stop the program, and the exit code is non-zero.
+7. **Given** an edited program whose name is already in the controller's memory, **When** the programmer runs `khi load <file> --replace`, **Then** khi sends DELETE/P for each program the file's `.PROGRAM` lines name, then LOAD; the controller holds the file's version; the output names every program deleted; one result line ends the output; and the exit code is zero.
+8. **Given** a file that adds a program not in memory, **When** the programmer runs `khi load <file> --replace`, **Then** the controller's P1038 reply to that program's DELETE/P is not a refusal, the file loads, and the exit code is zero.
+9. **Given** a program the controller will not let be deleted, **When** the programmer runs `khi load <file> --replace`, **Then** the controller's refusal prints verbatim, khi sends no LOAD and does nothing to stop the program, the output names every program already deleted, and the exit code is non-zero.
+10. **Given** the controller asks to confirm a DELETE/P, **When** the question arrives, **Then** khi confirms it for that program only, as the capture shows, and goes on.
+11. **Given** the controller gives a reply to DELETE/P that is not one of the captured replies, **When** it arrives, **Then** khi prints it verbatim, answers nothing, sends no LOAD, names every program already deleted, and exits non-zero.
 
 ---
 
@@ -145,10 +152,13 @@ A robot programmer copies the tasks template into a program repository and uses 
 
 ### Edge Cases
 
-- **Re-loading an edited program**: Both AS manuals say LOAD refuses a program name already in memory and aborts, and that programs are not overwritten. Without `--replace`, `khi load` fails with the controller's words and sends no replacement command. With it, khi replaces the programs the file names first.
-- **A replace that fails partway**: Replacing and loading are separate steps. If the load fails or times out after a program has been replaced, the controller may no longer hold the old program, and Article VI protects only the PC side. khi names every program it sent a replacement command for, on failure as on success.
-- **A program that cannot be replaced**: Both AS manuals say programs in execution or selected cannot be deleted, and the K-IDE manual strongly discourages transferring programs while the robot is running. The controller's refusal prints verbatim, khi sends no LOAD, and it does nothing to stop the program (Article III).
-- **A mechanism that reaches beyond the named programs**: Both AS manuals say plain `DELETE` also removes the subroutines and variables a program uses, `/D` also removes those other programs use, and only `DELETE/P` removes the program alone. If the capture shows a mechanism that removes anything the file does not name, the plan brings it to the Architect before it is implemented.
+- **Re-loading an edited program**: Both AS manuals say LOAD refuses a program name already in memory and aborts, and that programs are not overwritten. Without `--replace`, `khi load` fails with the controller's words and sends no DELETE/P. With it, khi sends DELETE/P for each program the file names, then LOAD.
+- **A replace that fails partway**: Deleting and loading are separate steps. If a later delete is refused, or the load fails or times out, after a program has been deleted, the controller no longer holds the old program, and Article VI protects only the PC side. khi names every program deleted, on failure as on success. A program whose DELETE/P got no reply before a timeout is named as possibly deleted.
+- **A program that cannot be deleted**: Both AS manuals say programs in execution or selected cannot be deleted, and the K-IDE manual strongly discourages transferring programs while the robot is running. The controller's refusal prints verbatim, khi sends no LOAD, names every program already deleted, and does nothing to stop the program (Article III).
+- **Why DELETE/P and nothing else**: Both AS manuals say plain `DELETE` also removes the subroutines and variables a program uses, and `/D` also removes those other programs use. Only `DELETE/P` removes the program alone, which is why Article III names it.
+- **A program not in memory**: Its DELETE/P gets `P1038 Program does not exist.`, which is not a refusal, so the program simply loads.
+- **A request to confirm a DELETE/P**: The manuals show none, but if the controller asks, khi confirms it for that program only, as the capture shows.
+- **Any other reply during the deletes**: A reply to DELETE/P that is not one of the captured replies (present, absent, refused, confirmation) stops before LOAD. khi prints it verbatim, answers nothing, sends no LOAD, names every program already deleted, and exits non-zero. A question during the LOAD itself follows FR-021.
 - **A file with no `.PROGRAM` lines under `--replace`**: There is nothing to replace, so it loads as a plain LOAD.
 - **A rejected step may be a question, not an error**: Both manuals say an incorrect step produces "The step format is incorrect (0: Continue load 1: Delete program and exit)". `khi load` cannot answer it (FR-021). The rejected-LOAD capture's note records what the controller's memory holds after the session closes at that question.
 - **The controller names no line**: Neither manual shows a line number for a rejected step. Where the controller names none, the output carries `<file>: <controller text>`, the problem matcher points at the file, and no line is invented. The plan brings the capture.
@@ -236,26 +246,26 @@ A robot programmer copies the tasks template into a program repository and uses 
 
 **Replacing programs**
 
-- **FR-034**: Replacing MUST be the person's choice, made with `--replace`. Without it, `khi load` MUST send no replacement command, and a name already in memory fails with the controller's words.
-- **FR-035**: Under `--replace`, khi MUST read the program names from the file's `.PROGRAM` header lines, those lines and nothing else, never a program body (Article II). It MUST replace those programs in controller memory by the mechanism a capture shows, then send LOAD and stream the file as FR-016 says. The plan fixes the exact form of a header line from the SAVE captures.
-- **FR-036**: A further capture MUST be taken: (k) KIDE, and KRterm if it can, replacing a program already in memory, recording what is sent, in what order, and what the controller answers. Article IV names KRterm as the source of a capture, so if only KIDE can show this, the plan brings that to the Architect.
-- **FR-037**: The commands sent under `--replace` MUST be exactly the captured replacement commands for the programs the file names, plus LOAD. A `.PROGRAM` line naming a program not in memory MUST be loaded without a replacement command if the capture shows that is how it works. How khi learns what is in memory is part of what the capture shows; khi sends no query the capture does not show. An answer to a controller's question counts as a replacement command only if the capture shows it, and FR-021 holds for every other question.
-- **FR-038**: A replacement MUST affect only the programs the file names. If the captured mechanism removes anything else, the plan MUST bring it to the Architect before it is implemented.
-- **FR-039**: If the controller refuses a replacement, khi MUST print its words verbatim, send no LOAD, and exit non-zero. Every wait for a reply during replacing MUST have a timeout (Article X). On any outcome, the output MUST name every program a replacement command was sent for.
+- **FR-034**: Replacing MUST be the person's choice, made with `--replace`. Without it, `khi load` MUST send no DELETE/P, and a name already in memory fails with the controller's words.
+- **FR-035**: Under `--replace`, khi MUST read the program names from the file's `.PROGRAM` header lines, those lines and nothing else, never a program body (Article II). It MUST send DELETE/P for each name, then send LOAD and stream the file as FR-016 says. There is no query and no other replacement command. The plan fixes the exact form of a header line from the SAVE captures.
+- **FR-036**: A further capture MUST be taken: (k) KRterm sending DELETE/P for a program that is present, one that is absent (P1038), one the controller refuses, and any confirmation the controller asks for. A KIDE capture of replacing a program is optional. A case K-ROSET cannot be made to produce is handled as FR-003 says.
+- **FR-037**: The commands sent under `--replace` MUST be exactly DELETE/P for each program the file's `.PROGRAM` lines name, plus LOAD. A P1038 reply MUST NOT count as a refusal; that program simply loads. If the controller asks to confirm a DELETE/P, khi MUST confirm it for that program only, as the capture shows.
+- **FR-038**: A replacement MUST remove only the programs the file names, so khi MUST use DELETE/P and never plain `DELETE` or `/D` (manual section 5.2).
+- **FR-039**: If the controller refuses a delete, or gives any reply to DELETE/P that is not one of the captured replies, khi MUST print its words verbatim, answer nothing, send no LOAD, and exit non-zero. Every wait for a reply during the deletes MUST have a timeout (Article X). On any outcome, the output MUST name every program deleted, and name as possibly deleted any program whose DELETE/P got no reply.
 
 ### Invariants as Tests
 
-These are the Architect's, word for word, except where the 2026-11-02 rulings changed INV-2, INV-6, INV-7, INV-8 and INV-9.
+These are the Architect's, word for word, except where the Architect's rulings of 2026-11-02 and 2026-11-03 changed INV-2, INV-6, INV-7, INV-8 and INV-9.
 
 - **INV-1 — Not an editor.** The bytes khi load sends for a file's content equal the file on disk. Gate: replay the LOAD capture with a fixture that has trailing spaces, tabs and mixed line endings; the stand-in receives them unchanged. Fire: trim trailing whitespace before sending.
-- **INV-2 — Not a robot runner.** Across every verb and every test, the controller commands khi issues of its own are only the login, the running verb's LOAD or SAVE command and, under khi load --replace, the captured replacement commands; in khi term, the only commands are the ones the test typed. Gate: the stand-in records every command received and the suite compares the union against that set; file content is covered by *Not an editor*. Fire: send ERESET before LOAD.
+- **INV-2 — Not a robot runner.** Across every verb and every test, the controller commands khi issues of its own are only the login, the running verb's LOAD or SAVE command and, under khi load --replace, DELETE/P; in khi term, the only commands are the ones the test typed. Gate: the stand-in records every command received and the suite compares the union against that set; file content is covered by *Not an editor*. Fire: send ERESET before LOAD.
 - **INV-3 — Not a guesser.** Every byte sequence khi originates or waits for — negotiation, login, command, transfer framing — is asserted by a test that names the capture it replays; a protocol test with no capture fails the gate. File content and typed input are not protocol. Fire: add a test with a hand-written expected reply.
 - **INV-4 — Not destructive on the PC side.** The stand-in drops the connection halfway through a SAVE; the target file is byte-identical to before and no temporary file remains. Repeat with a timeout and with a controller error. Fire: write straight to the target.
 - **INV-5 — No transfer hangs.** The stand-in goes silent during connect, during login, and mid-transfer; khi load and khi save exit non-zero within their timeout, naming the step they were waiting on, and khi term does the same before login. Fire: remove the timeout on one read.
 - **INV-6 — The terminal waits on the person.** After login, a silent stand-in leaves khi term open past every transfer timeout. When the stand-in closes the connection, khi term reports it and exits non-zero; when the test ends the session with Ctrl+], it exits zero. Fire: apply the transfer timeout to the relay.
 - **INV-7 — The controller's words, verbatim.** Replaying the rejected-LOAD capture, the output contains the controller's text exactly, carries `<file>:<line>:` for the line it names or `<file>:` where it names none, and the exit code is non-zero.
 - **INV-8 — Acceptance against K-ROSET, from VS Code.** With the template copied into a scratch repository and K-ROSET running: *Save controller to file* (full) writes the file; *Replace from current file* (`--replace`) loads it back; a second full save equals the first except for lines the controller stamps, which the plan lists. *Open terminal* reaches the prompt, and SAVE typed there writes into the scratch repository's folder.
-- **INV-9 — The constitution.** The constitution in `.specify/memory/constitution.md` is v1.1.0 as corrected at merge, and every review gate it lists is shown passing.
+- **INV-9 — The constitution.** The constitution in `.specify/memory/constitution.md` is v2.0.1 as corrected at merge, and every review gate it lists is shown passing.
 
 **Added by this spec, because the articles require them and the list above does not reach them:**
 
@@ -266,10 +276,15 @@ These are the Architect's, word for word, except where the 2026-11-02 rulings ch
 
 **From the 2026-11-02 rulings:**
 
-- **INV-13 — Replacing is the person's choice.** Under --replace, the commands sent are exactly the captured replacement commands for the programs the file names, plus LOAD; a .PROGRAM line naming a program not in memory is loaded without a replacement command if the capture shows that is how it works; without --replace, no replacement command is ever sent. Fire: send the replacement command without the flag.
+- **INV-13 — Replacing is the person's choice.** Under --replace, the commands sent are exactly DELETE/P for the programs the file names, plus LOAD; without --replace, no DELETE/P is ever sent. Fire: send DELETE/P without the flag.
 - **INV-14 — Ctrl+C belongs to the controller.** In `khi term`, Ctrl+C reaches the stand-in unchanged and the session stays open; Ctrl+] ends the session, exits zero, and never reaches the stand-in. Fire: close the session on Ctrl+C.
-- **INV-15 — Header lines and nothing else.** Under `--replace`, given a fixture whose program body and comments contain the text `.PROGRAM other()`, no replacement command names `other`. Fire: match `.PROGRAM` anywhere in a line.
-- **INV-16 — A replace reports what it touched.** Replaying the replacement capture and then dropping the connection during LOAD, the output names every program a replacement command was sent for, and the exit code is non-zero. Fire: report only on success.
+- **INV-15 — Header lines and nothing else.** Under `--replace`, given a fixture whose program body and comments contain the text `.PROGRAM other()`, no DELETE/P names `other`. Fire: match `.PROGRAM` anywhere in a line.
+- **INV-16 — A replace reports what it touched.** Replaying the DELETE/P capture and then dropping the connection during LOAD, the output names every program deleted, and the exit code is non-zero. Fire: report only on success.
+
+**From the 2026-11-03 rulings:**
+
+- **INV-17 — A new program loads.** Under `--replace`, a file that adds a program not in memory loads: that program's DELETE/P gets P1038, and LOAD follows. Fire: treat P1038 as a refusal.
+- **INV-18 — An unrecognised reply stops the replace.** Under --replace, any reply to DELETE/P that is not one of the captured replies (present, absent/P1038, refused, and the confirmation if one is captured) stops before LOAD, and the output names every program already deleted. Gate: replay the DELETE/P capture with the reply altered; no LOAD is sent. Fire: proceed to LOAD on an unrecognised reply.
 
 ### Manual Facts This Spec Relies On
 
@@ -290,7 +305,7 @@ Each was read in both AS Language Reference Manuals, 90209-1022 (E) and 90209-10
 | `DELETE` also removes the subroutines and variables a program uses; `DELETE/P` removes the program alone; `/D` also removes those other programs use | 5.2 |
 | Programs in execution or selected cannot be deleted | 5.2 |
 | Programs are written with a `.PROGRAM` header line | 4.2.4 |
-| `P0108 Syntax error.`, `P1033 Program name already exists.`, `P2009 Illegal file name.` | Appendix 4 |
+| `P0108 Syntax error.`, `P1033 Program name already exists.`, `P1038 Program does not exist.`, `P2009 Illegal file name.` | Appendix 4 |
 
 The K-IDE manual (20201116) adds two facts: K-ROSET's first robot answers at 127.0.0.1:9105 (2.5.4), and transferring programs while the robot is running is strongly discouraged (5.6.1).
 
@@ -312,7 +327,7 @@ The K-IDE manual (20201116) adds two facts: K-ROSET's first robot answers at 127
 - **SC-003**: In 100% of interrupted saves (dropped connection, timeout, controller error, at the verb and typed in the terminal), the existing file is byte-identical to before and no temporary file remains.
 - **SC-004**: In 100% of silence cases during connect, login and transfer, the tool ends non-zero within its stated timeout and names the step it was waiting on.
 - **SC-005**: A logged-in terminal session stays open while silent for longer than every transfer timeout.
-- **SC-006**: Across the whole test suite, zero controller commands fall outside the login, the running verb's own command, the recorded replacement commands when the person chose to replace, and what the test typed.
+- **SC-006**: Across the whole test suite, zero controller commands fall outside the login, the running verb's own command, DELETE/P when the person chose to replace, and what the test typed.
 - **SC-007**: 100% of the byte sequences the tool originates or waits for trace to a named recording, and 100% of the commands, qualifiers and controller messages it relies on cite a manual number and section.
 - **SC-008**: A controller rejection appears in the output exactly as the controller wrote it, with a non-zero exit, and the person reaches the line it named, or the file where it named none, from the editor's problem list in one click.
 - **SC-009**: A second full save equals the first in every line except the stamped lines the plan lists.

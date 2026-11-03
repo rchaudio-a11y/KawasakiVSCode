@@ -34,6 +34,8 @@
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 - 13 of 16 items pass after one revision. That revision added acceptance scenarios for FR-013, FR-020, FR-026, FR-028 and FR-032, which had none.
 - Rechecked on 2026-11-02 after the Architect's rulings. The results are unchanged, and the new requirements FR-034 to FR-039 have acceptance scenarios or invariants behind them.
+- Rechecked on 2026-11-03 against constitution v2.0.0 (DELETE/P only). The results are unchanged.
+- Rechecked on 2026-11-03 after the plan rulings (INV-18 restated, constitution v2.0.1). The results are unchanged.
 - **The three open items are deliberate and need no spec update.**
   - *No implementation details* (listed twice): FR-001 names .NET 10 and the three projects, and the invariants name the stand-in, sockets and temporary file. The Architect's request asks for these, and Articles I, V, VI and XV require them. Removing them would remove the request.
   - *Written for non-technical stakeholders*: The readers are the Architect and robot programmers, so AS, LOAD, SAVE and telnet are used without explanation.
