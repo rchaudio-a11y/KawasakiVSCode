@@ -165,7 +165,7 @@ this repository: nothing in it is changed, and no manual is copied into the repo
 
 - Option Strict On, Option Explicit On, Option Infer Off in every project.
 - Every .vb file starts with a header block: filename, project, description, author (RCH Automation LLC), created date.
-- XML documentation comments on every public class, method, property, event and interface member; GenerateDocumentationFile enabled so the compiler enforces it.
+- XML documentation comments on every public class, method, property, event and interface member. GenerateDocumentationFile is enabled, and a test compares every public member against the generated documentation file, so a missing comment fails the suite.
 - Naming: classes/methods/properties PascalCase; interfaces I-prefixed; private fields `_camelCase`; parameters and locals camelCase.
 - Diagnose-Before-Fix: symptom → source → cause → diagnosis → proposed fix → wait for confirmation → then fix.
 - Propose-Before-Building for anything touching more than one file, changing a signature, or making an architectural choice.
@@ -196,5 +196,6 @@ obligations, PATCH for wording.
 ### Amendments
 
 - **2026-11-02, 1.0.0 to 2.0.0.** Architect approval: given. Rationale: edit-and-reload: LOAD refuses a program name already in memory (AS Language Reference Manual §5.3), so the person can choose to replace; replacement deletes with DELETE/P only (§5.2). Migration path: none — nothing is built.
+- **2026-11-03, 2.0.0 to 2.0.1.** Architect approval: given. Rationale: the VB.NET compiler does not warn on a missing XML comment (probe at plan); enforcement moves to a test. Migration path: none — nothing is built.
 
-**Version**: 2.0.0 | **Ratified**: 2026-11-02 | **Last Amended**: 2026-11-02
+**Version**: 2.0.1 | **Ratified**: 2026-11-02 | **Last Amended**: 2026-11-03
