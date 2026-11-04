@@ -24,7 +24,7 @@ khi save <file> [--qualifier <q>] [--robot <name>]
 
 ## A question during a LOAD (`khi load`)
 
-The controller's question is printed verbatim on stdout. khi then reads the person's answer from the console with no time limit, and sends it as typed, Enter included; a Ctrl+C that reaches khi there is discarded. khi never answers on its own (FR-021). If the console closes or its input ends first, khi closes the session, exits 1, and says on stderr:
+The controller's question is printed verbatim on stdout. khi then reads the person's answer from the console with no time limit, and sends it as typed, Enter included; a Ctrl+C that reaches khi there is discarded. khi never answers on its own (FR-021). Whichever answer is given, the load exits 1, and the result line names the answer (below). If the console closes or its input ends first, khi closes the session, exits 1, and says on stderr:
 
 ```text
 khi: no answer to the controller's question; robot <name> may still be waiting on it and may need a restart
@@ -50,10 +50,14 @@ When the controller reports an error, khi prints the controller's text verbatim,
 The last line on stdout, on success and on failure:
 
 ```text
-khi <verb> <ok|failed>: robot <name>, file "<path>", <n> bytes, programs <a, b | none>
+khi <verb> <ok|failed>: robot <name>, file "<path>", <n> bytes, programs <a, b | none>[; completed with <n> error(s); answered <answer> (<label>)[; the controller's copy differs from the file]]
 ```
 
 - **Bytes**: count file content only, the bytes sent or written, never protocol traffic.
+- **The question part**: appears only when the controller asked a question during `khi load` and the person answered it (FR-021). The status is then always `failed`.
+  - `completed with <n> error(s)`: the controller's own count, `1 error` or `<n> errors`.
+  - `answered <answer> (<label>)`: what the person typed, and the controller's label for that answer, taken as its question printed it: the text after `<answer>:` in the question's list of choices, up to the next choice or the closing parenthesis. If the answer matches no choice, the parenthesis is left out.
+  - `the controller's copy differs from the file`: added after the answer `0`, which keeps the program with the step made a comment (capture (n)).
 
 Examples:
 
@@ -61,6 +65,8 @@ Examples:
 khi load ok: robot cell1, file "C:\cells\cell1\pallet.as", 4182 bytes, programs a1, test
 khi load failed: robot cell1, file "pallet.as", 4182 bytes, programs none
 khi save ok: robot sim, file "backup\full.as", 88213 bytes, programs main, pick, place
+khi load failed: robot sim, file "capn.as", 148 bytes, programs capn; completed with 1 error; answered 0 (Change to comment and continue); the controller's copy differs from the file
+khi load failed: robot sim, file "capo.as", 148 bytes, programs capo; completed with 1 error; answered 1 (Delete program and abort)
 ```
 
 ## Timeout and connection messages (stderr)

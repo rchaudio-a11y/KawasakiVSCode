@@ -139,6 +139,7 @@ Every run of `khi load` and `khi save` ends with one result line built from this
 | File | the path as the person gave it |
 | Bytes | file content only, sent or written; never protocol traffic |
 | Programs | names the controller reported, in its order; empty when it reported none |
+| QuestionAnswer | `khi load` only, after a question: the controller's error count, the answer the person typed, the controller's label for that answer as its question printed it, and whether the controller's copy differs from the file (after `0`) |
 | ExitCode | see the exit codes in [contracts/cli.md](contracts/cli.md) |
 
 ## Captures
