@@ -202,4 +202,6 @@ Any other line fails the SAVE: khi prints it verbatim, reads on to the end of th
 
 **Consequence**: A SAVE whose data holds a section no capture shows, such as variables, prints a label no capture holds, and fails until a capture adds that label. This is Article IV: a line no capture shows is not known to be normal.
 
+**A `ff` byte in the data**: no capture shows one, so `SaveLineRule` treats a `D` block holding one like an unknown line, and the save fails with the target untouched (FR-040). This is not implemented beyond failing safely.
+
 **Alternatives considered**: Matching error text such as `does not exist` would miss any error worded otherwise. Trusting `File save completed.` is what capture (h) disproves.

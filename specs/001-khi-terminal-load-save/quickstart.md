@@ -58,7 +58,7 @@ INV-8 and User Story 6, against K-ROSET.
 5. Run *khi: Open terminal*. **Expected**:
    - The `>` prompt appears.
    - With nothing selected, Ctrl+C does nothing: no `^C` reaches the controller, and the session stays open. With text selected, it copies.
-   - A typed `SAVE x.as` writes `x.as` into the scratch repository's folder.
+   - A typed `SAVE x.as` writes `x.as` into the scratch repository's folder, and a typed `load x.as` loads it back. khi relays both lines as typed, without KRterm's `18`, so these two steps show whether the controller starts a transfer for a plain typed line (FR-013).
    - Ctrl+] ends the session with exit code 0.
    - If Ctrl+] or an AS control key does not reach khi, check `terminal.integrated.sendKeybindingsToShell` and report what was needed.
 6. Edit a program to hold a syntax error and run *khi: Load current file*. When the controller asks its question, type `1` and Enter in the task's terminal. **Expected**: khi waits for the answer however long it takes, then the controller's text in the output, a non-zero exit, and the Problems list showing the named line, or the file where no line is named.

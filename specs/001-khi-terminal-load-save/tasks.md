@@ -30,20 +30,24 @@ description: "Task list for 001: khi, terminal, LOAD and SAVE from VS Code"
 - Enter is `0d 0a` (CR LF), as capture (a) shows. Every timeout is 10 s by default (T015, research R9).
 - "Record *n*" means the *n*-th record of that capture's `exchange.txt`, numbered as its note numbers them.
 
-## Decisions these tasks encode, for the Architect's check
+## Decisions these tasks encode
+
+The Architect accepted D1, D2 and D4, added a fallback to D3 and a test to D5, and ruled on U1 to U4 (2026-11-04).
 
 - **D1 The command bytes**: `khi load` and `khi save` send the command line, wait for its echo, then send `18`, the line again and `0d 0a`, as every KRterm LOAD and SAVE capture shows (for example (i) records 9 to 12, (d) records 9 to 12). The words are cased as captured: `load <name>` ((b), (i), (l), (n), (o)); `SAVE <name>`, `SAVE/P <name>` and `SAVE/FULL <name>` ((g), (d), (e)). data-model.md's `LOAD <bare name>` changes to `load <bare name>` (T029).
-- **D2 Error lines during a LOAD**: a line the controller prints during a LOAD that is not a captured normal LOAD line (`Loading...(<file>)`, `Program  <name>()`, `File load completed. (<n> errors)`) is an error line, and khi adds `<file>: <line>` for it (FR-018). The question line counts as one.
-- **D3 Recognising the LOAD question**: a line of the captured form `(<digit>:<label>, <digit>:<label>)` in the controller's text after its last `C` request ((c) record 18, (n) and (o) record 16). The wait for the person's answer then has no limit.
+- **D2 Error lines during a LOAD**: a line the controller prints during a LOAD that is not a captured normal LOAD line is an error line, and khi adds `<file>: <line>` for it (FR-018). The normal lines are the echo and redraw of the `load` line, `Loading...(<file>)`, `Program  <name>()` and `File load completed. (<n> errors)`. The question line counts as an error line.
+- **D3 Recognising the LOAD question**: a line of the captured form `(<digit>:<label>, <digit>:<label>)` in the controller's text after a `C` request ((c) record 18, (n) and (o) record 16). **Fallback**: any other unrecognised line followed by the controller going quiet for that wait's timeout is handed to the person the same way, instead of timing out (FR-021). Either way, the wait for the person's answer has no limit.
 - **D4 Regions and slices**: each test gives its payload and typed regions as record and byte numbers quoted from the capture's note. A test may replay records 1 to 8 (the login) followed by a later range of the same capture, such as (f) records 19 to 30.
-- **D5 Captures (h) and (m) replay only through `khi term`**: their SAVE lines name a program (`=nosuch`, `=capb`), which `khi save` never sends. So INV-19 and INV-4's controller-error case run through a typed SAVE whose test input is KRterm's typed bytes, and `SaveLineRule`'s unit test covers the rule for `khi save`.
+- **D5 Captures (h) and (m) replay only through `khi term`**: their SAVE lines name a program (`=nosuch`, `=capb`), which `khi save` never sends. So INV-19 and INV-4's controller-error case run through a typed SAVE whose test input is KRterm's typed bytes. A separate test (T068) shows `khi save` itself puts every line outside the file data through `SaveLineRule`.
 
-**Not captured, so not implemented until a capture or a ruling covers it** (Article IV):
+**Cases no capture covers, as the Architect ruled** (each with its test):
 
-- **U1**: A LOAD question while file data is still to be sent. Every capture asks after the last data block.
-- **U2**: A `ff` byte in file content, and whether telnet doubles it. No captured file holds one.
-- **U3**: A plain typed `load` or `SAVE` line in `khi term`, with no `18` before it. KRterm always sends one. Whether the controller starts the transfer for a plain line is checked at acceptance (T088).
-- **U4**: A `khi save` target named without an extension. §5.3 says the controller adds `.PG` or `.as`, and no capture shows what it then announces.
+- **U1, a question while file data is still to be sent**: khi stops the file data, ending the file with the end-of-file block as KRterm does at a question (capture (n) record 17); shows the line; and hands it to the person (FR-021, T055).
+- **U2, a `ff` byte in a file to load**: refused before connecting, naming the file and the byte's offset from 0, exit 2 (FR-042, T056). The scan is not Article II validation. Two further `ff` cases stay not implemented, and documented:
+  - **In SAVE data**: `SaveLineRule` treats a `D` block holding `ff` like an unknown line, so the save fails with the target untouched (FR-040, T066, T071).
+  - **In a file for a LOAD typed in `khi term`**: a known gap, since AS files are ASCII.
+- **U3, a LOAD or SAVE line typed in `khi term`**: relayed as typed, with no `18`; acceptance shows whether the controller starts the transfer (FR-013, T082, T094).
+- **U4, a `khi save` target with no extension**: refused by name before connecting, exit 2 (FR-043, T069).
 
 ---
 
@@ -100,11 +104,13 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
   - A wrong client byte fails the stand-in, which reports the record, the expected bytes and the received bytes.
   - `StopAt(record, Silent)` stops sending and holds the connection open. `StopAt(record, Close)` closes it.
   - A slice, records 1 to 8 and then a later range, plays as one capture (D4).
+  - Client bytes sent after the capture's last record, or after a `Silent` stop, are recorded and not compared.
 - [ ] T021 Implement `tests/KawasakiVSCode.Tests/StandIn/ControllerStandIn.vb`, a `TcpListener` on 127.0.0.1 with port 0 that serves one client:
   - **Replay**: each `S` record's exact bytes are sent once the client has sent everything the capture shows before it.
   - **Checking the client**: client bytes outside payload and typed regions must equal the captured `C` bytes.
   - **Payload regions**: each region the test names (record, first byte, last byte) is compared with the fixture the test gives.
   - **Typed regions**: their bytes come from the test's own input.
+  - **After the end**: client bytes after the capture's last record, or after a `Silent` stop, are recorded and not compared.
   - **No other source**: no member takes controller bytes from anywhere but a capture (INV-3).
 - [ ] T022 Write `tests/KawasakiVSCode.Tests/StandIn/CommandRecorderTests.vb`, then implement `tests/KawasakiVSCode.Tests/StandIn/CommandRecorder.vb` (INV-2):
   - **Recording**: every client line outside payload regions is recorded as a command: the bytes up to `0d 0a`, with a leading `18` removed.
@@ -226,7 +232,7 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
 
 ### Tests for User Story 2 ⚠️
 
-> Write these first, run them, confirm Red, and report it before T054.
+> Write these first, run them, confirm Red, and report it before T057.
 
 - [ ] T046 [P] [US2] Write `tests/KawasakiVSCode.Tests/Protocol/LoadProtocolTests.vb` `<Capture("b-load-small")>` (User Story 2 scenario 1, FR-016, FR-017, FR-028). Setup: `capb.as` copied from the capture's `files/` into a temporary folder, with a `khi.robots.json` there naming the stand-in. Then `khi load capb.as`:
   - Sends the command (D1).
@@ -261,39 +267,59 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
   - INV-5: capture (b) silent at record 36 gives exit 3 naming "transfer data".
   - Capture (b) closed at record 38 gives exit 4, the FR-020 message `the load did not finish and the controller's memory may have changed`, and the result line.
   - A `03` in the input during the transfer ends nothing (FR-041).
+- [ ] T054 [P] [US2] Write the D3 fallback in `tests/KawasakiVSCode.Tests/Protocol/LoadQuietTests.vb` `<Capture("f-typed-save-load")>`, slice of records 1 to 8 and 19 to 27, the stand-in `Silent` at record 28, with short timeouts:
+  - After `Cannot execute because program already in use.` (record 26) and khi's end-of-file block (record 27), the controller goes quiet.
+  - When the `TransferEnd` timeout runs out, khi does not exit 3: it hands the line to the person and keeps waiting, for longer than every timeout.
+  - Input `1` and CR LF sends `31 0d 0a`, recorded after the stop.
+  - Input then ending gives exit 1 and the no-answer message (FR-021).
+  - A controller that goes quiet after normal lines only still exits 3: capture (b) silent at record 36, as T053 shows.
+  - Fire: time out after an unrecognised line, as after a normal one.
+- [ ] T055 [P] [US2] Write U1 in `tests/KawasakiVSCode.Tests/Protocol/LoadEarlyQuestionTests.vb` `<Capture("n-load-question-0")>`, with the fixture `tests/KawasakiVSCode.Tests/Fixtures/u1-long/capn.as`, longer than 512 bytes:
+  - The payload region (record 15) is compared with the fixture's first 512 bytes.
+  - When the question arrives (record 16) with file data left, khi sends no further data block. It sends the end-of-file block `02 43 20 20 20 20 30 1a 17` (record 17), shows the line, and waits for the person.
+  - Input `0` and CR LF sends `30 0d 0a`, and the replay runs to its end.
+  - The result line reads `khi load failed: robot <name>, file "capn.as", 512 bytes, programs capn; completed with 1 error; answered 0 (Change to comment and continue); the controller's copy differs from the file`.
+  - Exit 1.
+  - Fire: send the next data block at the question.
+- [ ] T056 [P] [US2] Write U2 in `tests/KawasakiVSCode.Tests/Route/LoadByteRefusalTests.vb` through `KhiApp.Run`, with the fixture `tests/KawasakiVSCode.Tests/Fixtures/u2-ff/capb.as`, which holds `ff` at offset 37:
+  - `khi load capb.as` exits 2 with `khi: capb.as holds byte ff at offset 37; it cannot be sent` (FR-042, contracts/cli.md).
+  - No connection reaches the listening stand-in.
+  - Fire: send the file anyway.
 
 ### Implementation for User Story 2
 
-- [ ] T054 [US2] Implement `src/KawasakiVSCode.Core/Transfer/TransferFrame.vb` and `src/KawasakiVSCode.Core/Transfer/TransferFraming.vb`, the one door for framing bytes (captures (b), (j), (l)):
+- [ ] T057 [US2] Implement `src/KawasakiVSCode.Core/Transfer/TransferFrame.vb` and `src/KawasakiVSCode.Core/Transfer/TransferFraming.vb`, the one door for framing bytes (captures (b), (j), (l)):
   - **Reading**: controller frames, `05 02 <letter> <body> 17`, and the text between them.
   - **Building KRterm's answers**:
     - `02 <letter> 20 20 20 20 30 17`.
     - The data block `02 43 20 20 20 20 30 <up to 512 file bytes> 17`.
     - The end-of-file block `02 43 20 20 20 20 30 1a 17`.
     - The missing-file answer `02 41 2d 31 30 35 32 17`.
-- [ ] T055 [US2] Implement `src/KawasakiVSCode.Core/Transfer/LoadLineRule.vb` (D2, D3):
-  - The normal LOAD lines are `Loading...(<file>)`, `Program  <name>()` with two spaces, and `File load completed. (<n> errors)`. Every other line is an error line.
+- [ ] T058 [US2] Implement `src/KawasakiVSCode.Core/Transfer/LoadLineRule.vb` (D2, D3):
+  - The normal LOAD lines are the echo and redraw of the `load` line, `Loading...(<file>)`, `Program  <name>()` with two spaces, and `File load completed. (<n> errors)`. Every other line is an error line.
   - A question is a line `(<digit>:<label>, <digit>:<label>)`.
   - `LabelFor(answer)` returns the text after `<answer>:`, up to the next choice or `)`.
-- [ ] T056 [US2] Implement `src/KawasakiVSCode.Core/Terminal/PersonInput.vb`, the one door for the person's keys:
+- [ ] T059 [US2] Implement `src/KawasakiVSCode.Core/Terminal/PersonInput.vb`, the one door for the person's keys:
   - Reads the input stream and drops every `03`, Ctrl+C (FR-014, FR-041).
   - Reports `1d`, Ctrl+], and end of input.
   - Returns a line typed up to Enter as its bytes followed by `0d 0a`.
-- [ ] T057 [US2] Implement `src/KawasakiVSCode.Core/Transfer/LoadOperation.vb`:
+- [ ] T060 [US2] Implement `src/KawasakiVSCode.Core/Transfer/LoadOperation.vb`:
   - **Start**: the command (D1). The `A` block naming the bare name is answered.
   - **Blocks**: one `C` block per controller `C` request, 512 file bytes each, then the SUB block.
   - **End**: on the `E` block, `E    0`, then `File load completed. (<n> errors)` and `>`.
   - **Output**: the controller's text goes to stdout unaltered.
-  - **A question** (D3) after the last request waits on `PersonInput` without limit, sends the typed answer, and reads on.
+  - **A question** (D3) waits on `PersonInput` without limit, sends the typed answer, and reads on.
+  - **A question with file data left** (U1): no further data block; the end-of-file block is sent, then the question goes to the person.
+  - **The fallback** (D3): when a wait that follows an error line runs out, the line goes to the person as a question instead of timing out.
   - **Waits**: every other wait is bounded by its `WaitStep`.
-- [ ] T058 [US2] Implement `src/KawasakiVSCode.Cli/LoadVerb.vb` and wire it in `src/KawasakiVSCode.Cli/KhiApp.vb`:
-  - **Before connecting**: refuse a missing file (FR-019), and resolve the robot.
+- [ ] T061 [US2] Implement `src/KawasakiVSCode.Cli/LoadVerb.vb` and wire it in `src/KawasakiVSCode.Cli/KhiApp.vb`:
+  - **Before connecting**: refuse a missing file (FR-019); refuse a file holding `ff`, naming the file and the offset from 0 of the first one (FR-042, U2); and resolve the robot.
   - **Run**: connect, log in, and run `LoadOperation`.
   - **Error lines**: print `<file>: <line>` for each error line (FR-018).
   - **Exit**: 0 only on `(0 errors)` with no question asked (FR-017).
   - **On a dropped connection or a timeout**: print the FR-020 message.
   - **Result line**: end with it (FR-028), with the question part after a question (FR-021).
-- [ ] T059 [US2] Run every User Story 2 test green, and record the fire demonstrations of T047, T049 and T052 in their test files in `tests/KawasakiVSCode.Tests/Protocol/`
+- [ ] T062 [US2] Run every User Story 2 test green, and record the fire demonstrations of T047, T049, T052, T054 and T055 in their test files in `tests/KawasakiVSCode.Tests/Protocol/`, and of T056 in `tests/KawasakiVSCode.Tests/Route/`
 
 **Checkpoint**: `khi load` works against every LOAD capture; this is the MVP.
 
@@ -307,54 +333,59 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
 
 ### Tests for User Story 3 ⚠️
 
-> Write these first, run them, confirm Red, and report it before T065.
+> Write these first, run them, confirm Red, and report it before T070.
 
-- [ ] T060 [P] [US3] Write `tests/KawasakiVSCode.Tests/Protocol/SaveProtocolTests.vb` `<Capture("d-save-p")>`, `<Capture("e-save-full")>` and `<Capture("g-save-bare")>` (User Story 3 scenario 1). Commands: `khi save capd.as --qualifier P`, `khi save cape.as --qualifier FULL` and `khi save capg.as`. Each:
+- [ ] T063 [P] [US3] Write `tests/KawasakiVSCode.Tests/Protocol/SaveProtocolTests.vb` `<Capture("d-save-p")>`, `<Capture("e-save-full")>` and `<Capture("g-save-bare")>` (User Story 3 scenario 1). Commands: `khi save capd.as --qualifier P`, `khi save cape.as --qualifier FULL` and `khi save capg.as`. Each:
   - Sends the command (D1).
   - Answers `B` with `02 42 20 20 20 20 30 17` and `E` with `02 45 20 20 20 20 30 17`.
   - Writes the target byte-identical to the capture's `files/` file: 62,578, 372,831 and 311,587 bytes.
   - Leaves no temporary file.
   - Prints, for (d), `khi save ok: robot <name>, file "capd.as", 62578 bytes, programs capb, capl, home`.
   - Exits 0.
-- [ ] T061 [P] [US3] Write `tests/KawasakiVSCode.Tests/Protocol/SaveReplaceTests.vb` `<Capture("d-save-p")>`: with an existing `capd.as` in the folder, the target is replaced, and no `.bas` or other file is left (FR-026, User Story 3 scenarios 2 and 5)
-- [ ] T062 [P] [US3] Write INV-4 in `tests/KawasakiVSCode.Tests/Protocol/SaveSafetyTests.vb` `<Capture("d-save-p")>`, with an existing target holding known bytes:
+- [ ] T064 [P] [US3] Write `tests/KawasakiVSCode.Tests/Protocol/SaveReplaceTests.vb` `<Capture("d-save-p")>`: with an existing `capd.as` in the folder, the target is replaced, and no `.bas` or other file is left (FR-026, User Story 3 scenarios 2 and 5)
+- [ ] T065 [P] [US3] Write INV-4 in `tests/KawasakiVSCode.Tests/Protocol/SaveSafetyTests.vb` `<Capture("d-save-p")>`, with an existing target holding known bytes:
   - The stand-in closing at record 16 gives exit 4.
   - The stand-in silent at record 16 gives exit 3 naming "transfer data".
   - Each time, the target is byte-identical to before and no temporary file remains.
   - Fire: write straight to the target.
-- [ ] T063 [P] [US3] Write `tests/KawasakiVSCode.Tests/Transfer/SaveLineRuleTests.vb` (research R17): every line outside the `D` blocks in captures (d), (e), (f), (g) and (m) is normal; `nosuch:Variable (or program) does not exist.` from capture (h) is not. Fire: accept any line
-- [ ] T064 [P] [US3] Write `tests/KawasakiVSCode.Tests/Route/SaveRouteTests.vb` through `KhiApp.Run`:
+- [ ] T066 [P] [US3] Write `tests/KawasakiVSCode.Tests/Transfer/SaveLineRuleTests.vb` (research R17): every line outside the `D` blocks in captures (d), (e), (f), (g) and (m) is normal; `nosuch:Variable (or program) does not exist.` from capture (h) is not; a `D` block whose payload holds `ff` is treated as unknown (FR-040). Fire: accept any line
+- [ ] T067 [P] [US3] Write `tests/KawasakiVSCode.Tests/Route/SaveRouteTests.vb` through `KhiApp.Run`:
   - An unsupported qualifier is refused by name before connecting (FR-024).
   - A missing target folder is refused before connecting, naming the path.
   - A target held open by another process gives exit 5 after the replay of (d), with the target byte-identical and no temporary file (research R10).
   - A `03` in the input during the transfer ends nothing (FR-041).
+- [ ] T068 [P] [US3] Write D5 in `tests/KawasakiVSCode.Tests/Protocol/SaveCheckedLinesTests.vb` `<Capture("d-save-p")>`, `<Capture("e-save-full")>` and `<Capture("g-save-bare")>`: `khi save`'s outcome (`SaveLines`, data-model) lists every line outside the file data, each marked normal by `SaveLineRule`. For (d) these are the SAVE line's redraw, `Saving...(capd.as)`, `Network Configuration data` twice, `Program capb`, `Program capl`, `Program home` and `File save completed.`. Fire: skip `SaveLineRule` in `SaveOperation`; the list comes back empty
+- [ ] T069 [P] [US3] Write U4 in `tests/KawasakiVSCode.Tests/Route/SaveNameRefusalTests.vb` through `KhiApp.Run`:
+  - `khi save capd --qualifier P` exits 2 with `khi: capd has no extension; name the file with one` (FR-043, contracts/cli.md).
+  - No connection reaches the listening stand-in.
+  - Fire: send `SAVE/P capd`.
 
 ### Implementation for User Story 3
 
-- [ ] T065 [US3] Implement `src/KawasakiVSCode.Core/Transfer/SaveTarget.vb` (research R10, data-model SaveTarget):
+- [ ] T070 [US3] Implement `src/KawasakiVSCode.Core/Transfer/SaveTarget.vb` (research R10, data-model SaveTarget):
   - `TempPath` is `.<name>.<8 random hex>.khi-tmp`, in the target's folder.
   - `Commit` is `File.Move(temp, target, overwrite:=True)`.
   - `Abandon` deletes the temporary file.
   - A failed rename leaves the target untouched and is exit 5.
-- [ ] T066 [US3] Implement `src/KawasakiVSCode.Core/Transfer/SaveLineRule.vb` (FR-040, research R17), the one door. Its normal lines:
+- [ ] T071 [US3] Implement `src/KawasakiVSCode.Core/Transfer/SaveLineRule.vb` (FR-040, research R17), the one door. A `D` block whose payload holds `ff` is unknown. Its normal lines:
   - The echo and redraw of the SAVE line.
   - `Saving...(<file>)` and `Network Configuration data`.
   - The section labels R17 lists, `CONDITON DATA` spelled so.
   - `Program <name>`.
   - `File save completed.` and `>`.
-- [ ] T067 [US3] Implement `src/KawasakiVSCode.Core/Transfer/SaveOperation.vb`:
+- [ ] T072 [US3] Implement `src/KawasakiVSCode.Core/Transfer/SaveOperation.vb`:
   - **Start**: the command (D1). The `B` block is answered.
   - **Data**: each `D` block's payload, the bytes between `05 02 44` and `17`, goes to the temporary file.
-  - **Text outside the blocks** goes to stdout and through `SaveLineRule`; unknown lines are kept.
+  - **Text outside the blocks** goes to stdout and through `SaveLineRule`. Every line and its verdict goes into the outcome's `SaveLines` (D5), and unknown lines are kept.
   - **End**: on `E`, `E    0`, then `File save completed.` and `>`.
   - **Failure**: with any unknown line, the save fails once the transfer has ended.
   - **Waits**: every wait is bounded by its `WaitStep`.
-- [ ] T068 [US3] Implement `src/KawasakiVSCode.Cli/SaveVerb.vb` and wire it in `src/KawasakiVSCode.Cli/KhiApp.vb`:
-  - **Before connecting**: the qualifier goes through `SaveQualifier.Parse`, and a missing target folder is refused.
+- [ ] T073 [US3] Implement `src/KawasakiVSCode.Cli/SaveVerb.vb` and wire it in `src/KawasakiVSCode.Cli/KhiApp.vb`:
+  - **Before connecting**: the qualifier goes through `SaveQualifier.Parse`; a missing target folder is refused; and a target with no extension is refused by name (FR-043, U4).
   - **Commit**: only on completion with no unknown line (FR-022, FR-023, FR-040).
   - **Exit**: 1 on unknown lines, 3 on a timeout, 4 on a dropped connection, 5 on a failed replace.
   - **Result line**: `programs` from the `Program <name>` lines, and the bytes written (FR-028).
-- [ ] T069 [US3] Run every User Story 3 test green, and record the fire demonstrations of T062 and T063 in their test files in `tests/KawasakiVSCode.Tests/Protocol/` and `tests/KawasakiVSCode.Tests/Transfer/`
+- [ ] T074 [US3] Run every User Story 3 test green, and record the fire demonstrations of T065, T066, T068 and T069 in their test files in `tests/KawasakiVSCode.Tests/Protocol/`, `tests/KawasakiVSCode.Tests/Transfer/` and `tests/KawasakiVSCode.Tests/Route/`
 
 **Checkpoint**: `khi load` and `khi save` both work, each on its own.
 
@@ -370,9 +401,9 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
 
 ### Tests for User Story 4 ⚠️
 
-> Write these first, run them, confirm Red, and report it before T077.
+> Write these first, run them, confirm Red, and report it before T083.
 
-- [ ] T070 [P] [US4] Write `tests/KawasakiVSCode.Tests/Protocol/TerminalTests.vb` `<Capture("a-connect-login")>`:
+- [ ] T075 [P] [US4] Write `tests/KawasakiVSCode.Tests/Protocol/TerminalTests.vb` `<Capture("a-connect-login")>`:
   - `khi term` logs in, writes the controller's bytes to stdout unaltered, and sends the test's typed bytes unchanged, with no command of its own.
   - INV-6: silent after login for longer than every transfer timeout, the session stays open.
   - The stand-in closing gives exit 4 and `khi: robot <name> closed the connection`.
@@ -380,43 +411,47 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
   - INV-14: a `03` in the input is never sent and ends nothing.
   - INV-5: silent at record 2 gives exit 3.
   - Fires: apply the transfer timeout to the relay (INV-6); relay Ctrl+C (INV-14).
-- [ ] T071 [P] [US4] Write `tests/KawasakiVSCode.Tests/Protocol/TypedLoadTests.vb`:
+- [ ] T076 [P] [US4] Write `tests/KawasakiVSCode.Tests/Protocol/TypedLoadTests.vb`:
   - `<Capture("b-load-small")>`: the test types the `C` records among capture (b)'s records 9 to 33. khi recognises the `A` block from the framing (FR-012), supplies `capb.as` from the current folder unchanged, and hands back the prompt (User Story 4 scenario 3).
   - `<Capture("j-load-missing")>`: with no `nosuch.as`, khi answers `02 41 2d 31 30 35 32 17`, and the session continues.
-- [ ] T072 [P] [US4] Write `tests/KawasakiVSCode.Tests/Protocol/TypedSaveTests.vb`, each capture typed:
+- [ ] T077 [P] [US4] Write `tests/KawasakiVSCode.Tests/Protocol/TypedSaveTests.vb`, each capture typed:
   - `<Capture("d-save-p")>`: `capd.as` is written in the current folder through `SaveTarget`, equal to `files/capd.as`.
   - `<Capture("m-save-existing")>`, with `files/before/capm.as` in the folder: `capm.as` is replaced, equal to `files/capm.as`, with no `.bas` left (FR-026).
   - `<Capture("f-typed-save-load")>`: `capf.as` is written, the refused LOAD's text is shown, and the session continues (FR-011).
-- [ ] T073 [P] [US4] Write INV-19, and INV-4's controller-error case, in `tests/KawasakiVSCode.Tests/Protocol/TypedSaveErrorTests.vb` `<Capture("h-save-refused")>` typed (D5):
+- [ ] T078 [P] [US4] Write INV-19, and INV-4's controller-error case, in `tests/KawasakiVSCode.Tests/Protocol/TypedSaveErrorTests.vb` `<Capture("h-save-refused")>` typed (D5):
   - An existing `caph.as` stays byte-identical.
   - `nosuch:Variable (or program) does not exist.` is shown.
   - No temporary file remains.
   - The session continues.
   - Fire: accept any line outside the file data.
-- [ ] T074 [P] [US4] Write INV-10 in `tests/KawasakiVSCode.Tests/Protocol/TypedTransferSafetyTests.vb` `<Capture("d-save-p")>` typed:
+- [ ] T079 [P] [US4] Write INV-10 in `tests/KawasakiVSCode.Tests/Protocol/TypedTransferSafetyTests.vb` `<Capture("d-save-p")>` typed:
   - The stand-in silent at record 16 gives exit 3; closed there, exit 4.
   - The target is byte-identical to before, with no temporary file.
   - Fire: apply the terminal's unlimited wait to the typed transfer.
-- [ ] T075 [P] [US4] Write `tests/KawasakiVSCode.Tests/Protocol/TypedQuestionTests.vb` `<Capture("n-load-question-0")>` typed: the keystrokes `0` and Enter reach the controller during the typed transfer, each one restarting the `TypedTransfer` wait (research R9), and the session returns to the prompt (User Story 4 scenario 9)
-- [ ] T076 [P] [US4] Write `tests/KawasakiVSCode.Tests/Cli/ConsoleKeySourceTests.vb` on `ConsoleKeySource.KeyToBytes`: Enter gives `0d 0a`, Ctrl+C `03`, Ctrl+] `1d`, and a printable key its ASCII byte (research R8)
+- [ ] T080 [P] [US4] Write `tests/KawasakiVSCode.Tests/Protocol/TypedQuestionTests.vb` `<Capture("n-load-question-0")>` typed: the keystrokes `0` and Enter reach the controller during the typed transfer, each one restarting the `TypedTransfer` wait (research R9), and the session returns to the prompt (User Story 4 scenario 9)
+- [ ] T081 [P] [US4] Write `tests/KawasakiVSCode.Tests/Cli/ConsoleKeySourceTests.vb` on `ConsoleKeySource.KeyToBytes`: Enter gives `0d 0a`, Ctrl+C `03`, Ctrl+] `1d`, and a printable key its ASCII byte (research R8)
+- [ ] T082 [P] [US4] Write U3 in `tests/KawasakiVSCode.Tests/Protocol/TypedLineAsTypedTests.vb` `<Capture("a-connect-login")>`:
+  - After the prompt, the test types `load capb.as` and Enter, and then `SAVE/P capd.as` and Enter.
+  - The stand-in records exactly `6c 6f 61 64 20 63 61 70 62 2e 61 73 0d 0a` and then the SAVE line's bytes and `0d 0a`, with no `18` and no repeated line (FR-013). These are client bytes after the capture's last record, so they are recorded, not compared.
+  - Fire: send KRterm's `18` and the repeated line before Enter.
 
 ### Implementation for User Story 4
 
-- [ ] T077 [US4] Implement `src/KawasakiVSCode.Cli/ConsoleKeySource.vb` (research R8):
+- [ ] T083 [US4] Implement `src/KawasakiVSCode.Cli/ConsoleKeySource.vb` (research R8):
   - **Interactive**: `Console.TreatControlCAsInput = True` and `Console.ReadKey(intercept:=True)`, mapped by `KeyToBytes` and presented as a `Stream`.
   - **Redirected**: input read raw from standard input.
-- [ ] T078 [US4] Implement `src/KawasakiVSCode.Core/Terminal/TypedTransfer.vb`:
+- [ ] T084 [US4] Implement `src/KawasakiVSCode.Core/Terminal/TypedTransfer.vb`:
   - **On an `A` block**: the LOAD PC end, from `LoadOperation`'s block loop, against the named file in the current folder; `A-1052` when the file is missing.
   - **On a `B` block**: the SAVE PC end, from `SaveOperation`, into a `SaveTarget` for the announced name, under `SaveLineRule`.
   - **Waits**: every wait is bounded by `TypedTransfer`, and each keystroke restarts it.
   - **Keystrokes** keep being relayed (FR-013).
-- [ ] T079 [US4] Implement `src/KawasakiVSCode.Core/Terminal/TerminalRelay.vb` and `src/KawasakiVSCode.Core/Terminal/TerminalSession.vb` (FR-010 to FR-015):
+- [ ] T085 [US4] Implement `src/KawasakiVSCode.Core/Terminal/TerminalRelay.vb` and `src/KawasakiVSCode.Core/Terminal/TerminalSession.vb` (FR-010 to FR-015):
   - **The one unbounded read**: `TerminalRelay` is the only unbounded read of the controller besides a load question's wait (Article X).
-  - **Relaying**: `PersonInput` goes to the controller unchanged, and the controller's bytes go to stdout unaltered.
+  - **Relaying**: `PersonInput` goes to the controller unchanged, a typed LOAD or SAVE line included, with nothing added (FR-013, U3); the controller's bytes go to stdout unaltered.
   - **Transfers**: `A` and `B` blocks are handed to `TypedTransfer`.
   - **Ending**: Ctrl+], the console closing or input ending gives exit 0; the controller closing gives exit 4.
-- [ ] T080 [US4] Implement `src/KawasakiVSCode.Cli/TermVerb.vb` and wire it in `src/KawasakiVSCode.Cli/KhiApp.vb`; register `PosixSignal.SIGHUP` to close the socket and exit 0 when the console closes (research R8)
-- [ ] T081 [US4] Run every User Story 4 test green, and record the fire demonstrations of T070, T073 and T074 in their test files in `tests/KawasakiVSCode.Tests/Protocol/`
+- [ ] T086 [US4] Implement `src/KawasakiVSCode.Cli/TermVerb.vb` and wire it in `src/KawasakiVSCode.Cli/KhiApp.vb`; register `PosixSignal.SIGHUP` to close the socket and exit 0 when the console closes (research R8)
+- [ ] T087 [US4] Run every User Story 4 test green, and record the fire demonstrations of T075, T078, T079 and T082 in their test files in `tests/KawasakiVSCode.Tests/Protocol/`
 
 **Checkpoint**: All three verbs work.
 
@@ -430,17 +465,17 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
 
 These are Article XIII reachability tests over doors already proved Red-first in T032 to T035.
 
-- [ ] T082 [P] [US5] Write `tests/KawasakiVSCode.Tests/Route/RobotRouteTests.vb` through `KhiApp.Run`, for each verb, with two robots pointing at two stand-ins:
+- [ ] T088 [P] [US5] Write `tests/KawasakiVSCode.Tests/Route/RobotRouteTests.vb` through `KhiApp.Run`, for each verb, with two robots pointing at two stand-ins:
   - `--robot <name>` reaches that robot's stand-in (scenario 1).
   - With no `--robot`, the default is used (scenario 2).
   - No default and no `--robot`: refused listing the names, no connection, exit 2 (scenario 3).
   - An unknown name is refused by name, exit 2 (scenario 4).
   - A missing, unreadable or malformed robots file is refused naming the path (edge case).
-- [ ] T083 [US5] Extend `tests/KawasakiVSCode.Tests/Route/KhiExeTests.vb` through the built `khi.exe` (research R12, FR-033):
+- [ ] T089 [US5] Extend `tests/KawasakiVSCode.Tests/Route/KhiExeTests.vb` through the built `khi.exe` (research R12, FR-033):
   - An unknown robot gives exit 2.
   - A full `khi load` against the stand-in replaying (b) gives exit 0.
   - A full `khi save` replaying (d) gives exit 0.
-- [ ] T084 [US5] Correct in `src/KawasakiVSCode.Cli/KhiApp.vb`, `src/KawasakiVSCode.Cli/LoadVerb.vb`, `src/KawasakiVSCode.Cli/SaveVerb.vb` and `src/KawasakiVSCode.Cli/TermVerb.vb` any wiring T082 and T083 show missing, keeping `RobotSelection.Resolve` the one door
+- [ ] T090 [US5] Correct in `src/KawasakiVSCode.Cli/KhiApp.vb`, `src/KawasakiVSCode.Cli/LoadVerb.vb`, `src/KawasakiVSCode.Cli/SaveVerb.vb` and `src/KawasakiVSCode.Cli/TermVerb.vb` any wiring T088 and T089 show missing, keeping `RobotSelection.Resolve` the one door
 
 **Checkpoint**: Every verb reaches only the robot the person named or the default.
 
@@ -452,7 +487,7 @@ These are Article XIII reachability tests over doors already proved Red-first in
 
 **Independent Test**: The acceptance in INV-8, in a scratch repository with K-ROSET running (quickstart P3).
 
-- [ ] T085 [P] [US6] Write `tests/KawasakiVSCode.Tests/Conformance/TasksTemplateTests.vb` ([contracts/tasks-template.md](contracts/tasks-template.md), FR-029, FR-030). `templates/tasks.json` holds exactly three tasks:
+- [ ] T091 [P] [US6] Write `tests/KawasakiVSCode.Tests/Conformance/TasksTemplateTests.vb` ([contracts/tasks-template.md](contracts/tasks-template.md), FR-029, FR-030). `templates/tasks.json` holds exactly three tasks:
   - *khi: Load current file*: `khi load "${file}"`, both problem matchers, and `presentation` with `"reveal": "always"` and `"focus": true`.
   - *khi: Save controller to file*: `khi save "${input:khiSaveFile}" ${input:khiSaveQualifier}`, with no matcher.
   - *khi: Open terminal*: `khi term`.
@@ -461,9 +496,9 @@ These are Article XIII reachability tests over doors already proved Red-first in
   - The `khiSaveQualifier` `pickString` offers only full (`--qualifier FULL`), programs only (`--qualifier P`) and programs and data (nothing).
   - The patterns match `C:\cells\a.as:12: text` and `capo.as: (P0118)Illegal variable type.`.
   - They match neither `khi load failed: robot sim, file "capo.as", 148 bytes, programs capo` nor `Loading...(capo.as)`.
-- [ ] T086 [US6] Create `templates/tasks.json` as [contracts/tasks-template.md](contracts/tasks-template.md) describes
-- [ ] T087 [P] [US6] Write the README section in `README.md` (FR-031): publish khi with `dotnet publish src/KawasakiVSCode.Cli -c Release -o <folder on the PATH>`, copy `templates/tasks.json` into a program repository's `.vscode/`, and write its `khi.robots.json` ([contracts/robots-file.md](contracts/robots-file.md))
-- [ ] T088 [US6] Run the acceptance by hand with the Architect against K-ROSET in a scratch repository, following `specs/001-khi-terminal-load-save/quickstart.md` P3, steps 1 to 7. Include:
+- [ ] T092 [US6] Create `templates/tasks.json` as [contracts/tasks-template.md](contracts/tasks-template.md) describes
+- [ ] T093 [P] [US6] Write the README section in `README.md` (FR-031): publish khi with `dotnet publish src/KawasakiVSCode.Cli -c Release -o <folder on the PATH>`, copy `templates/tasks.json` into a program repository's `.vscode/`, and write its `khi.robots.json` ([contracts/robots-file.md](contracts/robots-file.md))
+- [ ] T094 [US6] Run the acceptance by hand with the Architect against K-ROSET in a scratch repository, following `specs/001-khi-terminal-load-save/quickstart.md` P3, steps 1 to 7. Include:
   - The typed `SAVE x.as`, which also settles U3.
   - Ctrl+C with nothing selected, which should do nothing.
   - `terminal.integrated.sendKeybindingsToShell`, if VS Code holds back Ctrl+].
@@ -478,15 +513,15 @@ These are Article XIII reachability tests over doors already proved Red-first in
 
 **Purpose**: The suite-wide guards, the review gates and the final run.
 
-- [ ] T089 [P] Write INV-3 in `tests/KawasakiVSCode.Tests/Conformance/NotAGuesserTests.vb`: every test method in the `KawasakiVSCode.Tests.Protocol` namespace carries `<Capture>` naming an existing capture folder. Fire: add a protocol test with no `<Capture>` and a reply written by hand
-- [ ] T090 Do INV-2's fire demonstration and record it in `tests/KawasakiVSCode.Tests/StandIn/CommandRecorderTests.vb`: make `src/KawasakiVSCode.Core/Transfer/LoadOperation.vb` send `ERESET` before LOAD, watch the stand-in fail the load tests on the recorded command, and revert
-- [ ] T091 Run CodeMem `extract` on `KawasakiVSCode.slnx`, check `map_status` is current, and prove each claim with `references` or `type_usages`, stating the count ([contracts/test-guards.md](contracts/test-guards.md#structural-claims-proved-in-review), research R15):
+- [ ] T095 [P] Write INV-3 in `tests/KawasakiVSCode.Tests/Conformance/NotAGuesserTests.vb`: every test method in the `KawasakiVSCode.Tests.Protocol` namespace carries `<Capture>` naming an existing capture folder. Fire: add a protocol test with no `<Capture>` and a reply written by hand
+- [ ] T096 Do INV-2's fire demonstration and record it in `tests/KawasakiVSCode.Tests/StandIn/CommandRecorderTests.vb`: make `src/KawasakiVSCode.Core/Transfer/LoadOperation.vb` send `ERESET` before LOAD, watch the stand-in fail the load tests on the recorded command, and revert
+- [ ] T097 Run CodeMem `extract` on `KawasakiVSCode.slnx`, check `map_status` is current, and prove each claim with `references` or `type_usages`, stating the count ([contracts/test-guards.md](contracts/test-guards.md#structural-claims-proved-in-review), research R15):
   - Only `TerminalRelay`, and a load question's wait, call the unbounded read.
   - `ControllerConnection.Send`, `SendFrame` and `PassThrough` are the only ways bytes leave khi.
   - `RobotSelection.Resolve`, `SaveQualifier.Parse`, `SaveLineRule`, `LoadLineRule`, `TransferFraming` and `PersonInput` are the only places their rules are applied.
-- [ ] T092 [P] Check every command, qualifier and controller message khi relies on cites its manual number and section beside the capture that proves it (FR-006, Article XVI). Check the XML docs of `src/KawasakiVSCode.Core/Commands/ControllerCommand.vb`, `SaveQualifier.vb`, `Session/LoginName.vb`, `Transfer/LoadLineRule.vb` and `Transfer/SaveLineRule.vb`
-- [ ] T093 INV-9: walk the ten review gates of constitution v3.0.0, each with its evidence, and record the result under the Constitution Check in `specs/001-khi-terminal-load-save/plan.md`
-- [ ] T094 Run quickstart P2: `dotnet build KawasakiVSCode.slnx` and `dotnet test KawasakiVSCode.slnx` all green, and every guard in [contracts/test-guards.md](contracts/test-guards.md) with its fire record in its test file
+- [ ] T098 [P] Check every command, qualifier and controller message khi relies on cites its manual number and section beside the capture that proves it (FR-006, Article XVI). Check the XML docs of `src/KawasakiVSCode.Core/Commands/ControllerCommand.vb`, `SaveQualifier.vb`, `Session/LoginName.vb`, `Transfer/LoadLineRule.vb` and `Transfer/SaveLineRule.vb`
+- [ ] T099 INV-9: walk the ten review gates of constitution v3.0.0, each with its evidence, and record the result under the Constitution Check in `specs/001-khi-terminal-load-save/plan.md`
+- [ ] T100 Run quickstart P2: `dotnet build KawasakiVSCode.slnx` and `dotnet test KawasakiVSCode.slnx` all green, and every guard in [contracts/test-guards.md](contracts/test-guards.md) with its fire record in its test file
 
 ---
 
@@ -500,7 +535,7 @@ These are Article XIII reachability tests over doors already proved Red-first in
 - **User Story 2 (Phase 4)** and **User Story 3 (Phase 5)**: depend on Foundational only, and can run in parallel.
 - **User Story 4 (Phase 6)**: depends on User Stories 2 and 3, whose framing, operations and save safety it reuses.
 - **User Story 5 (Phase 7)**: depends on the verbs it routes through (Phases 4 to 6).
-- **User Story 6 (Phase 8)**: depends on Phases 4 to 6. T088 also needs K-ROSET and the Architect.
+- **User Story 6 (Phase 8)**: depends on Phases 4 to 6. T094 also needs K-ROSET and the Architect.
 - **Polish (Phase 9)**: depends on everything above.
 
 ### Within each story
@@ -512,8 +547,8 @@ These are Article XIII reachability tests over doors already proved Red-first in
 
 - T019 before T020 and T021. T021 before every protocol test.
 - T025 before T027 and T029.
-- T035 and T039 before every verb task (T058, T068, T080).
-- T054 to T057 before T078; T065 to T067 before T078.
+- T035 and T039 before every verb task (T061, T073, T086).
+- T057 to T060 before T084; T070 to T072 before T084.
 
 ---
 
@@ -530,15 +565,20 @@ Task: "T050 LoadReplacesTests in tests/KawasakiVSCode.Tests/Protocol/LoadReplace
 Task: "T051 LoadInUseTests in tests/KawasakiVSCode.Tests/Protocol/LoadInUseTests.vb"
 Task: "T052 INV-7 and INV-11 in tests/KawasakiVSCode.Tests/Protocol/LoadQuestionTests.vb"
 Task: "T053 LoadRouteTests in tests/KawasakiVSCode.Tests/Route/LoadRouteTests.vb"
+Task: "T054 the D3 fallback in tests/KawasakiVSCode.Tests/Protocol/LoadQuietTests.vb"
+Task: "T055 U1 in tests/KawasakiVSCode.Tests/Protocol/LoadEarlyQuestionTests.vb"
+Task: "T056 U2 in tests/KawasakiVSCode.Tests/Route/LoadByteRefusalTests.vb"
 ```
 
 ### User Story 3, alongside User Story 2
 
 ```text
-Task: "T060 SaveProtocolTests in tests/KawasakiVSCode.Tests/Protocol/SaveProtocolTests.vb"
-Task: "T062 INV-4 in tests/KawasakiVSCode.Tests/Protocol/SaveSafetyTests.vb"
-Task: "T063 SaveLineRuleTests in tests/KawasakiVSCode.Tests/Transfer/SaveLineRuleTests.vb"
-Task: "T064 SaveRouteTests in tests/KawasakiVSCode.Tests/Route/SaveRouteTests.vb"
+Task: "T063 SaveProtocolTests in tests/KawasakiVSCode.Tests/Protocol/SaveProtocolTests.vb"
+Task: "T065 INV-4 in tests/KawasakiVSCode.Tests/Protocol/SaveSafetyTests.vb"
+Task: "T066 SaveLineRuleTests in tests/KawasakiVSCode.Tests/Transfer/SaveLineRuleTests.vb"
+Task: "T067 SaveRouteTests in tests/KawasakiVSCode.Tests/Route/SaveRouteTests.vb"
+Task: "T068 D5 in tests/KawasakiVSCode.Tests/Protocol/SaveCheckedLinesTests.vb"
+Task: "T069 U4 in tests/KawasakiVSCode.Tests/Route/SaveNameRefusalTests.vb"
 ```
 
 ### Foundational
@@ -573,5 +613,5 @@ Task: "T013 ExitCodeTests, T015 TimeoutsTests, T018 CaptureReaderTests, T030 Sav
 
 - Tasks marked **[P]** touch different files and depend on nothing unfinished.
 - Report every Red to the Architect before implementing (Article VII). Diagnose-Before-Fix applies to every failure found on the way.
-- Propose before building anything that touches more than one file in a way this list does not describe, changes a signature, or makes an architectural choice. Raise D1 to D5 and U1 to U4 with the Architect first if they are not yet accepted.
+- Propose before building anything that touches more than one file in a way this list does not describe, changes a signature, or makes an architectural choice. D1 to D5 and U1 to U4 are settled (2026-11-04).
 - Commit only when the Architect asks.

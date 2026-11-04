@@ -97,6 +97,8 @@ Any waiting state → TimedOut (exit 3) | ConnectionLost (exit 4)
 Ready → SendingLoad → Streaming → AwaitingCompletion → Done (exit 0)
                                                      ├ controller error → Failed (exit 1)
                                                      └ question → AwaitingAnswer (no time limit)
+Streaming → question with file data left → end-of-file block sent, no more data → AwaitingAnswer
+Any wait after an unrecognised line → quiet for its timeout → AwaitingAnswer (not TimedOut)
 AwaitingAnswer → the person's answer sent as typed → AwaitingCompletion
 AwaitingAnswer → Ctrl+C → discarded; still AwaitingAnswer
 AwaitingAnswer → console closed or input ended → Closed (exit 1; the controller may still be waiting)
@@ -139,6 +141,7 @@ Every run of `khi load` and `khi save` ends with one result line built from this
 | File | the path as the person gave it |
 | Bytes | file content only, sent or written; never protocol traffic |
 | Programs | names the controller reported, in its order; empty when it reported none |
+| SaveLines | `khi save` and a typed SAVE: each line outside the file data, with `SaveLineRule`'s verdict on it, normal or unknown |
 | QuestionAnswer | `khi load` only, after a question: the controller's error count, the answer the person typed, the controller's label for that answer as its question printed it, and whether the controller's copy differs from the file (after `0`) |
 | ExitCode | see the exit codes in [contracts/cli.md](contracts/cli.md) |
 
