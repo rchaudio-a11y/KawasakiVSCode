@@ -83,7 +83,7 @@ The one door for whether a line the controller prints outside the file data duri
 | TransferEnd | the end of the transfer |
 | TypedTransfer | a typed `<SAVE or LOAD>` |
 
-Values come from the captures (research R9). `TerminalRelay` after login, and the wait for the person's answer to a question during `khi load`, are the only waits with no timeout (Article X, v3.0.0).
+Values come from the captures (research R9). `TerminalRelay` after login, and the wait for the person's answer to a question during `khi load` or during a transfer typed in `khi term`, are the only waits with no timeout (Article X, v3.1.0).
 
 ### Session states
 

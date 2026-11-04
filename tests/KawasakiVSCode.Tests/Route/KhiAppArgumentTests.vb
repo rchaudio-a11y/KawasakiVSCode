@@ -16,7 +16,7 @@ Namespace Route
     ''' <summary>
     ''' The command line through KhiApp.Run (Article XIII, contracts/cli.md Synopsis). "No connection" is not
     ''' asserted here: nothing connects yet, so such an assertion would pass vacuously (Article VII). It is
-    ''' asserted with the stand-in once khi load connects (User Story 2).
+    ''' asserted with the stand-in once khi load connects (T047).
     ''' </summary>
     <TestClass>
     Public Class KhiAppArgumentTests

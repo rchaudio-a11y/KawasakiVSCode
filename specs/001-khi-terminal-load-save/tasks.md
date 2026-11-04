@@ -5,7 +5,7 @@ description: "Task list for 001: khi, terminal, LOAD and SAVE from VS Code"
 
 # Tasks: khi — terminal, LOAD and SAVE from VS Code
 
-**Input**: Design documents from `specs/001-khi-terminal-load-save/`: [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md), [data-model.md](data-model.md), [contracts/](contracts/), [quickstart.md](quickstart.md); constitution v3.0.0.
+**Input**: Design documents from `specs/001-khi-terminal-load-save/`: [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md), [data-model.md](data-model.md), [contracts/](contracts/), [quickstart.md](quickstart.md); constitution v3.1.0.
 
 **Prerequisites**: Captures (a) to (o) and the three extras are checked in with confirmed notes. Captures (p) and (q) are still to be taken (T044), and gate G0 holds every task that sends or awaits controller bytes until they are checked in.
 
@@ -128,7 +128,7 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
 - [ ] T025 Implement `src/KawasakiVSCode.Core/Connection/ControllerConnection.vb`:
   - `Connect(robot, timeouts)`, and `ReadUntil(step, until)` with that step's timeout on every read.
   - `Send(command As ControllerCommand)`, `SendFrame(frame As TransferFrame)` and `PassThrough(bytes)` are the only ways bytes leave khi (research R15).
-  - `ReadUnbounded` is used only by `TerminalRelay` and while a load question waits for the person (Article X).
+  - `ReadUnbounded` is used only by `TerminalRelay`, and while a question during `khi load` or during a typed transfer waits for the person (Article X).
 - [ ] T026 Write `tests/KawasakiVSCode.Tests/Protocol/LoginTests.vb` `<Capture("a-connect-login")>`:
   - khi sends `ff fb 18` first, and nothing in reply to `ff fd 18`.
   - At `login: ` it sends `61 73 0d 0a`.
@@ -246,6 +246,7 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
   - Answers the `E` block with `02 45 20 20 20 20 30 17`.
   - Copies the controller's bytes to stdout unaltered, ending with `khi load ok: robot <name>, file "capb.as", 103 bytes, programs capb`.
   - Exits 0.
+  - **No connection on a refusal** (T038's check, asserted here because `khi load` is the first verb that connects): in the same folder, with the stand-in listening, each command line T038 refuses gives exit 2 and the stand-in accepts no connection (`ControllerStandIn` reports whether it accepted one). Fire: connect before parsing the command line.
 - [ ] T048 [P] [US2] Write INV-1 in `tests/KawasakiVSCode.Tests/Protocol/LoadContentTests.vb` `<Capture("b-load-small")>`. Create the fixture `tests/KawasakiVSCode.Tests/Fixtures/inv1-mixed/capb.as`: under 512 bytes, with trailing spaces, tabs, and CR LF, LF and CR line ends. The payload region (record 37, bytes 8 to 110) is compared with the fixture, and the stand-in receives it unchanged. Fire: trim trailing whitespace before sending
 - [ ] T049 [P] [US2] Write `tests/KawasakiVSCode.Tests/Protocol/LargeLoadTests.vb` `<Capture("l-load-large")>`:
   - `capl.as` goes as 120 `C` blocks of 512 file bytes and one of 1 byte, each sent only after the controller's next `C` request, then the end-of-file block.
@@ -443,7 +444,7 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
   - The stand-in silent at record 16 gives exit 3; closed there, exit 4.
   - The target is byte-identical to before, with no temporary file.
   - Fire: apply the terminal's unlimited wait to the typed transfer.
-- [ ] T083 [P] [US4] Write `tests/KawasakiVSCode.Tests/Protocol/TypedQuestionTests.vb` `<Capture("n-load-question-0")>` typed: the keystrokes `0` and Enter reach the controller during the typed transfer, each one restarting the `TypedTransfer` wait (research R9), and the session returns to the prompt (User Story 4 scenario 9). If the Article X amendment drafted as 3.1.0 is approved, the wait at the question has no limit instead, and this test also checks that khi stays open past every transfer timeout at the question
+- [ ] T083 [P] [US4] Write `tests/KawasakiVSCode.Tests/Protocol/TypedQuestionTests.vb` `<Capture("n-load-question-0")>` typed: at the question, with nothing typed, khi stays open past every transfer timeout (FR-015, Article X, v3.1.0); then the keystrokes `0` and Enter reach the controller unchanged, and the session returns to the prompt (User Story 4 scenario 9). Fire: apply the `TypedTransfer` timeout to the wait at the question
 - [ ] T084 [P] [US4] Write `tests/KawasakiVSCode.Tests/Cli/ConsoleKeySourceTests.vb` on `ConsoleKeySource.KeyToBytes`: Enter gives `0d 0a`, Ctrl+C `03`, Ctrl+] `1d`, and a printable key its ASCII byte (research R8)
 - [ ] T085 [P] [US4] Write U3 in `tests/KawasakiVSCode.Tests/Protocol/TypedLineAsTypedTests.vb` `<Capture("a-connect-login")>`:
   - After the prompt, the test types `load capb.as` and Enter, and then `SAVE/P capd.as` and Enter.
@@ -462,16 +463,16 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
 - [ ] T088 [US4] Implement `src/KawasakiVSCode.Core/Terminal/TypedTransfer.vb`:
   - **On an `A` block**: the LOAD PC end, from `LoadOperation`'s block loop, against the named file in the current folder; `A-1052` when the file is missing.
   - **On a `B` block**: the SAVE PC end, from `SaveOperation`, into a `SaveTarget` for the announced name, under `SaveLineRule`.
-  - **Waits**: every wait is bounded by `TypedTransfer`, and each keystroke restarts it. Under the pending 3.1.0, the wait at a question has no limit.
+  - **Waits**: every wait is bounded by `TypedTransfer`, and each keystroke restarts it, except the wait at a controller question, which has no limit (FR-015, Article X, v3.1.0). A question is recognised as `LoadOperation` recognises it (D3).
   - **Keystrokes** keep being relayed (FR-013).
   - **A save khi cannot write**: reported with its path, the session closed, exit 5, and no temporary file left (T086).
 - [ ] T089 [US4] Implement `src/KawasakiVSCode.Core/Terminal/TerminalRelay.vb` and `src/KawasakiVSCode.Core/Terminal/TerminalSession.vb` (FR-010 to FR-015):
-  - **The one unbounded read**: `TerminalRelay` is the only unbounded read of the controller besides a load question's wait (Article X).
+  - **The one unbounded read**: `TerminalRelay` is the only unbounded read of the controller besides the wait at a question during `khi load` or a typed transfer (Article X).
   - **Relaying**: `PersonInput` goes to the controller unchanged, a typed LOAD or SAVE line included, with nothing added (FR-013, U3); the controller's bytes go to stdout unaltered.
   - **Transfers**: `A` and `B` blocks are handed to `TypedTransfer`.
   - **Ending**: Ctrl+], the console closing or input ending gives exit 0; the controller closing gives exit 4.
 - [ ] T090 [US4] Implement `src/KawasakiVSCode.Cli/TermVerb.vb` and wire it in `src/KawasakiVSCode.Cli/KhiApp.vb`; register `PosixSignal.SIGHUP` to close the socket and exit 0 when the console closes (research R8)
-- [ ] T091 [US4] Run every User Story 4 test green, and record the fire demonstrations of T078, T081, T082, T085 and T086 in their test files in `tests/KawasakiVSCode.Tests/Protocol/`
+- [ ] T091 [US4] Run every User Story 4 test green, and record the fire demonstrations of T078, T081, T082, T083, T085 and T086 in their test files in `tests/KawasakiVSCode.Tests/Protocol/`
 
 **Checkpoint**: All three verbs work.
 
@@ -537,11 +538,11 @@ These are Article XIII reachability tests over doors already proved Red-first in
 - [ ] T100 [P] Write `tests/KawasakiVSCode.Tests/Conformance/NoAddressInCodeTests.vb` (Article IX, FR-009): no `.vb` file under `src/` holds an IPv4 literal or `localhost`; the only address khi uses comes from `khi.robots.json`. Fire: put `127.0.0.1` in one Core file
 - [ ] T101 Do INV-2's fire demonstration and record it in `tests/KawasakiVSCode.Tests/StandIn/CommandRecorderTests.vb`: make `src/KawasakiVSCode.Core/Transfer/LoadOperation.vb` send `ERESET` before LOAD, watch the stand-in fail the load tests on the recorded command, and revert
 - [ ] T102 Run CodeMem `extract` on `KawasakiVSCode.slnx`, check `map_status` is current, and prove each claim with `references` or `type_usages`, stating the count ([contracts/test-guards.md](contracts/test-guards.md#structural-claims-proved-in-review), research R15):
-  - Only `TerminalRelay`, and a load question's wait, call the unbounded read.
+  - Only `TerminalRelay`, and the wait at a question during `khi load` or a typed transfer, call the unbounded read.
   - `ControllerConnection.Send`, `SendFrame` and `PassThrough` are the only ways bytes leave khi.
   - `RobotSelection.Resolve`, `SaveQualifier.Parse`, `SaveLineRule`, `LoadLineRule`, `TransferFraming` and `PersonInput` are the only places their rules are applied.
 - [ ] T103 [P] Check every command, qualifier and controller message khi relies on cites its manual number and section beside the capture that proves it (FR-006, Article XVI). Check the XML docs of `src/KawasakiVSCode.Core/Commands/ControllerCommand.vb`, `SaveQualifier.vb`, `Session/LoginName.vb`, `Transfer/LoadLineRule.vb` and `Transfer/SaveLineRule.vb`
-- [ ] T104 INV-9: walk the ten review gates of constitution v3.0.0, each with its evidence, and record the result under the Constitution Check in `specs/001-khi-terminal-load-save/plan.md`
+- [ ] T104 INV-9: walk the ten review gates of constitution v3.1.0, each with its evidence, and record the result under the Constitution Check in `specs/001-khi-terminal-load-save/plan.md`
 - [ ] T105 Run quickstart P2: `dotnet build KawasakiVSCode.slnx` and `dotnet test KawasakiVSCode.slnx` all green, and every guard in [contracts/test-guards.md](contracts/test-guards.md) with its fire record in its test file
 
 ---

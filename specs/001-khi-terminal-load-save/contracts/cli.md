@@ -11,7 +11,28 @@ khi save <file> [--qualifier <q>] [--robot <name>]
 ```
 
 - **Options**: An option may appear before or after `<file>`. Each option may appear once.
-- **Refused before connecting**, each by name: an unknown verb, an unknown option, an option the verb doesn't take, a repeated option, a missing `<file>`, an extra argument, and an unsupported qualifier.
+- **Refused before connecting**, each by name: an unknown verb, an unknown option, an option the verb doesn't take, a repeated option, a missing `<file>`, an extra argument, and an unsupported qualifier. Verbs, options and qualifiers match exactly, case included. Each refusal is one line on stderr, exit 2; only the first is followed by the usage:
+
+  ```text
+  khi: no verb given                       (followed by the usage below)
+  khi: unknown verb <verb>
+  khi: unknown option <option>             (any argument starting with -, other than --robot and --qualifier)
+  khi: khi <verb> does not take <option>
+  khi: <option> is given twice
+  khi: <option> needs a value              (the next argument is missing or starts with -)
+  khi: khi <verb> needs a <file>
+  khi: unexpected argument <argument>
+  khi: qualifier "<q>" is not supported; khi save takes --qualifier P, --qualifier FULL, or no qualifier
+  khi: unknown qualifier "<q>"; khi save takes --qualifier P, --qualifier FULL, or no qualifier
+  ```
+
+  "Not supported" is for the qualifiers the manual lists with no capture behind them (FR-024); "unknown" is for anything else. The usage:
+
+  ```text
+  usage: khi term [--robot <name>]
+         khi load <file> [--robot <name>]
+         khi save <file> [--qualifier <q>] [--robot <name>]
+  ```
 - **Refused before connecting, for a file**:
 
   ```text

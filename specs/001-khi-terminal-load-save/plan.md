@@ -2,7 +2,7 @@
 
 **Branch**: `001-khi-terminal-load-save` | **Date**: 2026-11-03, revised 2026-11-04 | **Spec**: [spec.md](spec.md)
 
-**Input**: Feature specification from `specs/001-khi-terminal-load-save/spec.md`, governed by constitution v3.0.0 (amended 2026-11-04 from v2.0.1).
+**Input**: Feature specification from `specs/001-khi-terminal-load-save/spec.md`, governed by constitution v3.1.0 (amended 2026-11-04 from v2.0.1 to v3.0.0, then to v3.1.0).
 
 ## Summary
 
@@ -38,7 +38,7 @@ Two research findings shape the plan. The capture route is the relay, which the 
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Checked against constitution v2.0.1 before research, and again after design. Rechecked against v3.0.0 on 2026-11-04, after the rulings on the captures.
+Checked against constitution v2.0.1 before research, and again after design. Rechecked against v3.0.0 on 2026-11-04, after the rulings on the captures, and against v3.1.0 the same day, after the Article X amendment was approved: row X.
 
 | Rule | How this plan meets it | Status |
 |------|------------------------|--------|
@@ -51,7 +51,7 @@ Checked against constitution v2.0.1 before research, and again after design. Rec
 | VII Test-First | Every task runs test, Red, report Red, implement, Green. Every guard records its fire demonstration in its test file. | Pass |
 | VIII The Controller's Words | Controller text goes to the output unaltered, in the `<file>:<line>:` or `<file>:` form (INV-7). The result line is defined in [contracts/cli.md](contracts/cli.md). | Pass |
 | IX Controllers Are Configuration | `khi.robots.json` is read through `RobotSelection`, the one door. The login name `as` is one constant in Core citing manual 2.6.1. The relay script takes its ports as required parameters with no defaults. | Pass |
-| X Bounded Waits | Every read goes through `ControllerConnection` with a named `WaitStep` and a timeout. Only `TerminalRelay` after login, and the wait for the person's answer to a question during `khi load`, are unbounded, as v3.0.0 allows (INV-5, INV-6, INV-10, INV-11). | Pass |
+| X Bounded Waits | Every read goes through `ControllerConnection` with a named `WaitStep` and a timeout. Only `TerminalRelay` after login, and the wait for the person's answer to a question during `khi load` or during a transfer typed in `khi term`, are unbounded, as v3.1.0 allows (INV-5, INV-6, INV-10, INV-11). | Pass |
 | XI Anti-Abstraction | No interfaces planned and no DI container; `Timeouts` is passed as a plain parameter. An abstraction needs three call sites in hand. | Pass |
 | XII One Door for Every Rule | The doors are `RobotSelection`, `SaveQualifier`, `ControllerCommand`, `TransferFraming`, `LoadLineRule`, `SaveLineRule`, `SaveTarget`, `PersonInput` and `ControllerConnection` waits. See [research R15](research.md#r15-one-door-per-rule). | Pass |
 | XIII Production-Route Reachability | Every refusal and error has a test through `KhiApp.Run`; exit-code checks also run through `khi.exe`. | Pass |
@@ -82,7 +82,7 @@ Checked against constitution v2.0.1 before research, and again after design. Rec
 **Settled by the Architect's rulings on the analysis, 2026-11-04**:
 - **Captures (p) and (q)**, a LOAD longer than 512 bytes with an error in its first block, and a LOAD of an empty file, are added; Article IV stays as written. Gate G0 waits on them again, so Phase 2's protocol tasks, the connection, the login and the command bytes, start only once they are checked in.
 - **A line followed by the `>` prompt** is a refusal and fails the load; only quiet with no prompt goes to the person (FR-021).
-- **A question during a typed transfer** waits without limit, once the Article X amendment drafted as 3.1.0 is approved.
+- **A question during a typed transfer** waits without limit (FR-015; Article X, v3.1.0, approved 2026-11-04).
 - **A `17` byte** in a file to load is refused like `ff` (FR-042).
 - **Keys**: khi does not emulate KRterm's shortcuts; copy and paste are VS Code's, and Ctrl+C is copy. khi never relays Ctrl+C: when VS Code passes it through, khi discards it in every verb, and it is not a quit (FR-014, FR-041, INV-14). Ctrl+] ends the session. Capture `c-load-rejected-ctrl-c` is kept as a record only.
 

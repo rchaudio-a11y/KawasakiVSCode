@@ -73,13 +73,13 @@ Constitution 2.0.1 makes this test the rule.
 
 **Rationale**: Checked here: restoring the template's `MSTest` 4.0.2 meta-package pulled in `Microsoft.Testing.Extensions.Telemetry` and `Microsoft.Testing.Extensions.CodeCoverage`. The three packages are Microsoft's and work with VB.
 
-**The first restore, 2026-11-04 (T007)**: the three packages resolved as `MSTest.TestFramework` 4.5.2, `MSTest.TestAdapter` 4.5.2 and `Microsoft.NET.Test.Sdk` 18.11.0. Referenced directly, they still bring in `Microsoft.Testing.Extensions.Telemetry` 2.5.2 and `Microsoft.ApplicationInsights` 2.23.0 (through `MSTest.TestAdapter`), and `Microsoft.CodeCoverage` 18.11.0 (through `Microsoft.NET.Test.Sdk`). So, as the decision says, every test run sets `TESTINGPLATFORM_TELEMETRY_OPTOUT=1`, and `DOTNET_CLI_TELEMETRY_OPTOUT=1` for the CLI. Code coverage runs only when asked for with `--collect`, which this project never does. Referencing the packages directly no longer keeps these out, so the plan's reason for avoiding the meta-package is weaker than it was; the Architect may rule on it.
+**The first restore, 2026-11-04 (T007)**: the three packages resolved as `MSTest.TestFramework` 4.5.2, `MSTest.TestAdapter` 4.5.2 and `Microsoft.NET.Test.Sdk` 18.11.0. Referenced directly, they still bring in `Microsoft.Testing.Extensions.Telemetry` 2.5.2 and `Microsoft.ApplicationInsights` 2.23.0 (through `MSTest.TestAdapter`), and `Microsoft.CodeCoverage` 18.11.0 (through `Microsoft.NET.Test.Sdk`). So, as the decision says, test runs set `TESTINGPLATFORM_TELEMETRY_OPTOUT=1`: `KawasakiVSCode.runsettings` at the repository root sets it for the test host, the tests project points at that file through `RunSettingsFilePath`, and `TelemetryOptOutTests` checks that the value reaches the host. `DOTNET_CLI_TELEMETRY_OPTOUT=1` has to be set in the environment that runs `dotnet`, because the CLI reads it before any settings file. Code coverage runs only when asked for with `--collect`, which this project never does. Referencing the packages directly no longer keeps these out, so the plan's reason for avoiding the meta-package is weaker than it was; the Architect may rule on it.
 
 **Alternatives considered**: xUnit and NUnit both have VB templates, but neither is lighter, and MSTest is Microsoft's.
 
 ## R6 Command-line parsing
 
-**Decision**: A hand-written `ArgumentParser` for three verbs and four options. Anything else is refused by name: an unknown verb, an unknown option, or an option on a verb that doesn't take it.
+**Decision**: A hand-written `ArgumentParser` for three verbs and two options, `--robot` and `--qualifier`. Anything else is refused by name: an unknown verb, an unknown option, or an option on a verb that doesn't take it. The wording of every refusal is in [contracts/cli.md](contracts/cli.md#synopsis).
 
 **Rationale**: The surface is small, and Article XV discourages packages.
 
@@ -114,7 +114,7 @@ Constitution 2.0.1 makes this test the rule.
 **Decision**:
 - **Per wait**: Every timeout applies to one wait, not to a whole transfer, so a transfer that keeps moving never times out.
 - **Values**: Each `WaitStep`'s value comes from the captures. It is three times the longest gap seen for that step, but never below 10 seconds, and it is recorded in `Timeouts` with the capture it came from.
-- **Typed transfers**: Inside a typed transfer, every keystroke the person sends starts a new wait, so a controller question can be answered without running out the timer, and every wait stays bounded (Article X).
+- **Typed transfers**: Inside a typed transfer, every keystroke the person sends starts a new wait, and every wait is bounded except the wait for the person's answer to a controller question, which has no limit, as during `khi load` (Article X, v3.1.0; FR-015). The waits before the question and after the answer keep theirs.
 - **A question during `khi load`**: The wait for the person's answer has no timeout (Article X, v3.0.0). The waits before the question and after the answer keep theirs.
 - **Tests**: `Timeouts` is a parameter of `KhiApp.Run`; `Main` passes the defaults and tests pass short values. There is no person-facing timeout option.
 

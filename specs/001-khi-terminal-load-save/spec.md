@@ -56,7 +56,7 @@ The Architect's rulings on `/speckit-analyze`'s findings.
 
 - Q: Do a question with file data left, and a LOAD of an empty file, need captures? → A: Yes. Article IV stays as written, so both are captured: (p), a LOAD of a file longer than 512 bytes with an error in its first block, and (q), a LOAD of an empty file. khi does what each shows KRterm doing.
 - Q: How does khi tell a refusal from a question when the controller stops talking during a LOAD? → A: A line followed by the `>` prompt is a refusal and fails the load. Only quiet with no prompt goes to the person (FR-021).
-- Q: Does a question during a transfer typed in `khi term` wait without limit? → A: Yes, as a question during `khi load` does. This needs an Article X amendment, drafted as 3.1.0 for the Architect's approval; until it is approved, FR-015 stands.
+- Q: Does a question during a transfer typed in `khi term` wait without limit? → A: Yes, as a question during `khi load` does. This needs an Article X amendment, drafted as 3.1.0 for the Architect's approval; until it is approved, FR-015 stands. *Approved on 2026-11-04 as constitution v3.1.0; FR-015 carries the exception.*
 - Q: Is a `17` byte in a file to load refused like `ff`? → A: Yes. `17` (ETB) ends a transfer block, so a file holding one is refused before connecting, naming the file and the offset (FR-042).
 
 ## User Scenarios & Testing *(mandatory)*
@@ -194,7 +194,7 @@ A robot programmer copies the tasks template into a program repository and uses 
 - **Ctrl+C during a transfer typed in `khi term`**: Discarded like any Ctrl+C (FR-014); the transfer goes on.
 - **Ctrl+] during a transfer typed in `khi term`**: The session ends and khi exits zero, because the person ended it. A typed SAVE's target stays byte-identical to before with no temporary file left; a typed LOAD carries the warning above.
 - **Ctrl+C at the prompt**: Ctrl+C is VS Code's copy. With nothing selected, VS Code passes it through and khi discards it; the session stays open. AS's own uses of Ctrl+C, cancelling the input line and the `CTRL+C:Exit` choice some AS prompts offer, are not available from `khi term`; the person uses another choice the prompt offers.
-- **A question during a typed transfer**: Keystrokes keep being relayed so the person can answer. Under constitution v3.0.0 the wait stays bounded (FR-015), and a wait that runs out closes the session at the question. The Architect has ruled that this wait has no limit, as during `khi load`, once the Article X amendment drafted as 3.1.0 is approved.
+- **A question during a typed transfer**: Keystrokes keep being relayed so the person can answer. The wait for the answer has no limit, as during `khi load` (FR-015, Article X, v3.1.0). The question is recognised as during `khi load` (FR-021), and the waits before the question and after the answer keep their timeouts.
 - **A typed transfer stalls**: The wait times out, khi names the step, closes the session, and exits non-zero. The session does not return to the prompt, because Article X leaves it closed.
 - **A typed LOAD names a missing file**: khi answers the controller as the capture shows KRterm doing, then hands the prompt back.
 - **A typed SAVE khi cannot write**: khi reports it, closes the session, and exits non-zero, unless a capture shows a recorded way to decline.
@@ -235,7 +235,7 @@ A robot programmer copies the tasks template into a program repository and uses 
 - **FR-012**: When the controller begins a SAVE or LOAD the person typed, khi MUST play the PC end against files relative to the current folder, then hand the prompt back. khi MUST recognise this from the controller's recorded transfer framing, not by reading what the person typed.
 - **FR-013**: A typed SAVE MUST follow the same temporary-file and replacement rule as `khi save`. A typed LOAD MUST send the file's bytes unchanged. Keystrokes MUST keep being relayed during a typed transfer. The LOAD or SAVE line the person types MUST be relayed as typed: khi adds nothing to it, such as the `18` and repeated line KRterm sends. Acceptance shows whether the controller starts the transfer for it (quickstart P3).
 - **FR-014**: After login, `khi term` MUST wait on the person without limit. Ctrl+C MUST NOT reach the controller: when VS Code passes it through because nothing is selected, khi MUST discard it, and it MUST NOT end the session. Ctrl+], the console closing, or its input ending MUST close the socket and exit zero; Ctrl+] itself MUST NOT reach the controller. A controller-side close MUST be reported and exit non-zero.
-- **FR-015**: Every wait during connect, login and a typed transfer MUST have a timeout. A timeout MUST name the step that was waiting, leave the session closed, and exit non-zero.
+- **FR-015**: Every wait during connect, login and a typed transfer MUST have a timeout, except the wait for the person's answer to a controller question during a typed transfer, which MUST have none (Article X, v3.1.0); a question is recognised as during `khi load` (FR-021). A timeout MUST name the step that was waiting, leave the session closed, and exit non-zero.
 
 **Load**
 
@@ -294,7 +294,7 @@ These are the Architect's, word for word, except where the Architect's rulings o
 - **INV-6 — The terminal waits on the person.** After login, a silent stand-in leaves khi term open past every transfer timeout. When the stand-in closes the connection, khi term reports it and exits non-zero; when the test ends the session with Ctrl+], it exits zero. Fire: apply the transfer timeout to the relay.
 - **INV-7 — The controller's words, verbatim.** Replaying the rejected-LOAD captures (n) and (o), which carry capture (c)'s error through to the end of the load, the output contains the controller's text exactly, carries `<file>:<line>:` for the line it names or `<file>:` where it names none, and the exit code is non-zero.
 - **INV-8 — Acceptance against K-ROSET, from VS Code.** With the template copied into a scratch repository and K-ROSET running: *Save controller to file* (full) writes the file; *Load current file* loads it back; a second full save equals the first except for lines the controller stamps, which the plan lists. *Open terminal* reaches the prompt, and SAVE typed there writes into the scratch repository's folder.
-- **INV-9 — The constitution.** The constitution in `.specify/memory/constitution.md` is v3.0.0 as corrected at merge, and every review gate it lists is shown passing.
+- **INV-9 — The constitution.** The constitution in `.specify/memory/constitution.md` is v3.1.0 as corrected at merge, and every review gate it lists is shown passing.
 
 **Added by this spec, because the articles require them and the list above does not reach them:**
 

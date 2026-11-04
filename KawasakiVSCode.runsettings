@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  KawasakiVSCode test settings (research R5). The test packages bring in telemetry transitively, so the
+  test host runs with it opted out. The tests project points here through RunSettingsFilePath, so
+  dotnet test and Visual Studio both use it. The dotnet CLI's own telemetry is read before this file,
+  so DOTNET_CLI_TELEMETRY_OPTOUT still has to be set in the environment that runs dotnet.
+-->
+<RunSettings>
+  <RunConfiguration>
+    <EnvironmentVariables>
+      <TESTINGPLATFORM_TELEMETRY_OPTOUT>1</TESTINGPLATFORM_TELEMETRY_OPTOUT>
+      <DOTNET_CLI_TELEMETRY_OPTOUT>1</DOTNET_CLI_TELEMETRY_OPTOUT>
+    </EnvironmentVariables>
+  </RunConfiguration>
+</RunSettings>

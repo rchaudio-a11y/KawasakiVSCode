@@ -9,6 +9,7 @@
     <OptionInfer>Off</OptionInfer>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <LangVersion>latest</LangVersion>
+    <RunSettingsFilePath>$(MSBuildThisFileDirectory)..\..\KawasakiVSCode.runsettings</RunSettingsFilePath>
   </PropertyGroup>
 
   <ItemGroup>

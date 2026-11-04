@@ -39,6 +39,6 @@ INV-13, INV-15, INV-16, INV-17 and INV-18 were removed on 2026-11-04 with `--rep
 
 Once code exists, these are proved with CodeMem `references` or `type_usages` against a current map, with the count stated. Text search is not enough.
 
-- Only `TerminalRelay` calls the unbounded read.
+- Only `TerminalRelay`, and the wait at a question during `khi load` or a typed transfer, call the unbounded read.
 - `ControllerConnection.Send` is reached only with a `ControllerCommand`, `TransferFraming` bytes, or pass-through content.
 - `RobotSelection.Resolve`, `SaveQualifier.Parse`, `TransferFraming`, `LoadLineRule`, `SaveLineRule`, `SaveTarget` and `PersonInput` are the only places their rules are applied.
