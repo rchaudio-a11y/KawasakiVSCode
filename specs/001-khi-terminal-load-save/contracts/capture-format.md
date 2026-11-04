@@ -11,7 +11,7 @@ tests/KawasakiVSCode.Tests/Captures/<id>-<slug>/
 └── files/           # files KRterm wrote (SAVE) or read (LOAD), byte for byte
 ```
 
-`<id>` is the spec's letter: `a` for connect and login, through `k` for DELETE/P. The folder carries `-text` in `.gitattributes`, so Git never rewrites line endings in it.
+`<id>` is the spec's letter: `a` for connect and login, through `o` for the LOAD question answered with `1`. An extra capture beside a spec capture keeps its letter and adds to the slug, as `c-load-rejected-ctrl-c` does. The folder carries `-text` in `.gitattributes`, so Git never rewrites line endings in it.
 
 ## exchange.txt
 
@@ -56,9 +56,8 @@ Required headings and content:
 - **Payload regions**: Compared with the fixture the test names (INV-1). For a SAVE, the test checks the written file against the capture's file in `files/`.
 - **Typed regions**: Taken from the test's own input.
 - **Recording**: Every client line outside payload regions is recorded as a command, so the suite can compare the union against the allowed set (INV-2).
-- **Faults**: The stand-in can stop at a given record, either by going silent (INV-5, INV-6, INV-10) or by closing the connection (INV-4, INV-16). These faults only cut a capture short.
-- **Altered reply (INV-18 only)**: The stand-in can replace the controller's reply to one DELETE/P in capture (k) with different bytes. A test using it must assert that khi stops: no LOAD and nothing further sent. This is the only case where the stand-in sends bytes no capture holds.
+- **Faults**: The stand-in can stop at a given record, either by going silent (INV-5, INV-6, INV-10) or by closing the connection (INV-4). These faults only cut a capture short.
 
 ## Capture-only rule for tests
 
-Every protocol test names the capture it replays. A test that writes its own controller reply fails the INV-3 gate. The one exception is an altered-reply test under INV-18. It asserts only that khi stops on bytes it does not recognise, never bytes khi waits for, so Article IV still holds, as the Architect ruled on 2026-11-03.
+Every protocol test names the capture it replays. A test that writes its own controller reply fails the INV-3 gate. There is no exception: the altered-reply test the Architect allowed under INV-18 on 2026-11-03 went with `--replace` on 2026-11-04.

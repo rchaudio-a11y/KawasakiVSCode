@@ -16,7 +16,7 @@ Phase 0 for [plan.md](plan.md). Each entry gives the decision, why, and what els
 - **The log**: 4 records in each direction, 7 bytes toward the controller and 50 from it.
 - **Direct connection**: The Architect confirmed that KRterm connected straight to 9105 shows the same prompt.
 
-The proof log was not checked in. Captures (a) to (l) follow in the same session. The relay has its own test, `tools/Test-CaptureRelay.ps1`.
+The proof log was not checked in. Captures (a) to (o) follow in the same session. The relay has its own test, `tools/Test-CaptureRelay.ps1`.
 
 **Alternatives considered**: Installing Npcap and capturing on loopback adds a driver to the PC and gives the same bytes. A relay written in VB would need a fourth project and an Article I justification; PowerShell is allowed for dev-time scripts (Article XV).
 
@@ -32,10 +32,12 @@ The proof log was not checked in. Captures (a) to (l) follow in the same session
 | How a file larger than one transfer block is split, including the last partial block | (l) LOAD of a generated program of about 60 KB |
 | How a rejected step appears, whether a line or step is named, the question text | (c) rejected LOAD |
 | SAVE command form with `/P`, `/FULL` and none; framing; completion marker; the file KRterm wrote | (d) `SAVE/P`, (e) `SAVE/FULL`, (g) bare `SAVE` |
-| A SAVE the controller refuses | (h) |
-| LOAD of a name already in memory (P1033) | (i) |
+| A SAVE the controller refuses or reports an error in | (h) |
+| LOAD of a name already in memory | (i), and the extra `i-load-existing-changed` |
 | A typed SAVE and LOAD inside a session, and a typed LOAD of a missing file | (f), (j) |
-| DELETE/P present, absent (P1038), refused, and any confirmation | (k), KRterm required, KIDE optional |
+| DELETE/P present, absent, refused, and any confirmation | (k), KRterm; kept, though no 001 behaviour relies on it since `--replace` was dropped |
+| A SAVE onto a file name that already exists: whether the old file's rename to `.bas` travels in the protocol | (m) |
+| What the controller sends after the LOAD question is answered with `0`, and with `1` | (n), (o); Ctrl+C at the question is `c-load-rejected-ctrl-c` |
 | Whether telnet doubles a 0xFF byte inside file content | (b) and (d), if any file holds one; AS files are expected to be ASCII |
 
 **Rationale**: Article IV. A behaviour no capture shows is recorded as not implemented and reported to the Architect.
@@ -90,6 +92,8 @@ Constitution 2.0.1 makes this test the rule.
 **Decision**:
 - **Interactive keys**: With the console interactive, set `Console.TreatControlCAsInput = True` and read keys with `Console.ReadKey(intercept:=True)`. Each key goes to the controller as its byte; Ctrl+C is 0x03. Ctrl+] (0x1D) ends the session and is never sent.
 - **Redirected input**: When input is redirected, as in tests, read raw bytes from standard input. End of input ends the session, and a 0x1D byte is treated like Ctrl+].
+- **An answer during `khi load`**: At a controller question, `khi load` reads the person's answer the same way, keys with `Console.TreatControlCAsInput = True` when interactive and raw bytes when redirected, so Ctrl+C arrives as 0x03 and is sent as the answer (FR-021). It sends what was typed, with Enter as captures (n) and (o) show it, and reads on. End of input before an answer closes the session.
+- **No shortcuts of khi's own**: khi does not emulate KRterm's shortcuts, such as Alt+V to paste; copy and paste are VS Code's terminal's (Architect, 2026-11-04).
 - **Console closing**: Register `PosixSignal.SIGHUP`, which .NET raises on Windows when the console closes, to close the socket and exit zero.
 - **Output**: The controller's bytes go to the raw standard-output stream, not through a text encoder.
 
@@ -105,6 +109,7 @@ Constitution 2.0.1 makes this test the rule.
 - **Per wait**: Every timeout applies to one wait, not to a whole transfer, so a transfer that keeps moving never times out.
 - **Values**: Each `WaitStep`'s value comes from the captures. It is three times the longest gap seen for that step, but never below 10 seconds, and it is recorded in `Timeouts` with the capture it came from.
 - **Typed transfers**: Inside a typed transfer, every keystroke the person sends starts a new wait, so a controller question can be answered without running out the timer, and every wait stays bounded (Article X).
+- **A question during `khi load`**: The wait for the person's answer has no timeout (Article X, v3.0.0). The waits before the question and after the answer keep theirs.
 - **Tests**: `Timeouts` is a parameter of `KhiApp.Run`; `Main` passes the defaults and tests pass short values. There is no person-facing timeout option.
 
 **Rationale**: Article X, plus the spec's edge case on typed transfers. Checked here: KRterm's own setting is `TimeoutSec=600`, which is far looser than khi needs.
@@ -139,6 +144,8 @@ Constitution 2.0.1 makes this test the rule.
 
 ## R14 Reading `.PROGRAM` header lines
 
+**Withdrawn on 2026-11-04** with `--replace`: nothing in this feature reads a file's content. Kept for a later feature. The SAVE captures show headers of the form `.PROGRAM capb() #0`, which the rule below already reads correctly.
+
 **Decision**: `ProgramHeaderReader` reads a name from a line that begins with `.PROGRAM` and a space. The name runs up to the first `(`, space or `;`, as in the manual's listings: `.PROGRAM aa()`, `.PROGRAM palletize`, `.PROGRAM emergency()   ;comment`, `.PROGRAM relative.test`. The exact form is confirmed against the files KRterm wrote in captures (d) and (e) before the reader is built. It looks at the start of each line and at nothing else in it.
 
 **Rationale**: Article II's exception covers "those lines and nothing else", and INV-15 guards it.
@@ -152,7 +159,7 @@ Constitution 2.0.1 makes this test the rule.
 | Which robot (Article IX) | `RobotSelection.Resolve` |
 | Supported qualifiers | `SaveQualifier.Parse` |
 | What khi may send as a command (Article III) | `ControllerCommand`; `ControllerConnection.Send` takes only a `ControllerCommand`, framing bytes from `TransferFraming`, or pass-through content |
-| Which names `--replace` deletes (Article II) | `ProgramHeaderReader` |
+| Whether a line outside the file data is normal during a SAVE (FR-040) | `SaveLineRule` |
 | Every wait has a timeout (Article X) | `ControllerConnection.ReadUntil(step, ...)`; only `TerminalRelay` reads without a limit, and only after login |
 | Replacing a saved file (Article VI) | `SaveTarget` |
 
@@ -172,3 +179,25 @@ Constitution 2.0.1 makes this test the rule.
 | 5 | A local file step failed, for example the target could not be replaced |
 
 **Rationale**: The spec asks only for zero and non-zero. Distinct codes let tests tell the failure paths apart, and let a task's caller do the same.
+
+## R17 Normal lines during a SAVE
+
+**Decision**: During a SAVE, the controller prints text outside the `D` blocks that carry the file. A line there is normal only if it is one of these, as the SAVE captures show them on a good save; `SaveLineRule` is the one door for the list (FR-040):
+
+| Line | Where it comes | Captures |
+|------|----------------|----------|
+| The echo of the SAVE command and the redraw of the line before the `B` block | before the `B` block | (d), (e), (f), (g), (h) |
+| `Saving...(<file>)` | after the `B` block | all |
+| `Network Configuration data` | before each `.NETCONF` and `.NETCONF2` line | all |
+| `ROBOT DATA`, `OPERATION INFORMATION DATA`, `SYSTEM DATA`, `AUX DATA`, `INTERFACE PANEL DATA`, `INTERFACE PANEL PAGE TITLE`, `INTERFACE PANEL COLOR DATA`, `SIGNAL_NAME`, `STORAGE DATA`, `MAINTENANCE DATA` | before their sections | (e), and (g) up to `SIGNAL_NAME` |
+| `CONDITON DATA`, spelled so | before `.CONDITION` | (g) |
+| `Program <name>` | after each `.PROGRAM` line | (d), (e), (f), (g) |
+| `File save completed.`, then `>` | after the `E` block | all |
+
+Any other line fails the SAVE: khi prints it verbatim, reads on to the end of the transfer, and leaves the target untouched (Article VI). In capture (h), `nosuch:Variable (or program) does not exist.` is such a line.
+
+**Rationale**: The Architect's ruling of 2026-11-04. SAVE's completion line carries no error count, and capture (h) ends `File save completed.` after an error, so a line a good SAVE never prints is the only sign of failure.
+
+**Consequence**: A SAVE whose data holds a section no capture shows, such as variables, prints a label no capture holds, and fails until a capture adds that label. This is Article IV: a line no capture shows is not known to be normal.
+
+**Alternatives considered**: Matching error text such as `does not exist` would miss any error worded otherwise. Trusting `File save completed.` is what capture (h) disproves.

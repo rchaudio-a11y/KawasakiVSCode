@@ -6,7 +6,7 @@ What the person and VS Code tasks see. The behaviour behind it is in [spec.md](.
 
 ```text
 khi term [--robot <name>]
-khi load <file> [--replace] [--robot <name>]
+khi load <file> [--robot <name>]
 khi save <file> [--qualifier <q>] [--robot <name>]
 ```
 
@@ -20,7 +20,19 @@ khi save <file> [--qualifier <q>] [--robot <name>]
 | Stream | Carries |
 |--------|---------|
 | stdout | The controller's bytes, unaltered. `khi load` and `khi save` add their file-reference lines and the result line. |
-| stderr | khi's own messages: refusals, timeouts, connection failures, and `--replace` progress |
+| stderr | khi's own messages: refusals, timeouts and connection failures |
+
+## A question during a LOAD (`khi load`)
+
+The controller's question is printed verbatim on stdout. khi then reads the person's answer from the console with no time limit, and sends it as typed, Enter included; Ctrl+C typed there is sent too. khi never answers on its own (FR-021). If the console closes or its input ends first, khi closes the session, exits 1, and says on stderr:
+
+```text
+khi: no answer to the controller's question; robot <name> may still be waiting on it and may need a restart
+```
+
+## Unknown lines during a SAVE (`khi save`)
+
+A line the controller prints outside the file data that is not a captured normal line ([research R17](../research.md#r17-normal-lines-during-a-save)) is printed verbatim on stdout, as all controller text is. The save then fails: the target is untouched, the result line says `failed`, and the exit code is 1 (FR-040).
 
 ## Controller error lines (`khi load`)
 
@@ -38,18 +50,16 @@ When the controller reports an error, khi prints the controller's text verbatim,
 The last line on stdout, on success and on failure:
 
 ```text
-khi <verb> <ok|failed>: robot <name>, file "<path>", <n> bytes, programs <a, b | none>[; deleted <a, b>][; possibly deleted <c>]
+khi <verb> <ok|failed>: robot <name>, file "<path>", <n> bytes, programs <a, b | none>
 ```
 
-- **The `deleted` part**: appears only under `--replace` when DELETE/P was sent for at least one program, and names those programs.
-- **The `possibly deleted` part**: names any program whose DELETE/P got no reply before a timeout.
 - **Bytes**: count file content only, the bytes sent or written, never protocol traffic.
 
 Examples:
 
 ```text
 khi load ok: robot cell1, file "C:\cells\cell1\pallet.as", 4182 bytes, programs a1, test
-khi load failed: robot cell1, file "pallet.as", 4182 bytes, programs none; deleted a1
+khi load failed: robot cell1, file "pallet.as", 4182 bytes, programs none
 khi save ok: robot sim, file "backup\full.as", 88213 bytes, programs main, pick, place
 ```
 
@@ -68,7 +78,7 @@ khi: robot <name> closed the connection
 | Code | Meaning |
 |------|---------|
 | 0 | Success, or a terminal session the person ended (Ctrl+], console closed, input ended) |
-| 1 | The controller reported an error or refusal, or asked a question khi may not answer |
+| 1 | The controller reported an error or refusal, or asked a question the person gave no answer to before the console closed or input ended |
 | 2 | khi refused before connecting |
 | 3 | A wait timed out |
 | 4 | The connection failed, was refused, or was closed by the controller |

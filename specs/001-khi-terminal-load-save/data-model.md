@@ -44,16 +44,10 @@ The only commands khi originates (Article III). Each has a fixed text form taken
 | Login | Every verb, at the login prompt | the constant `as` (manual 2.6.1) |
 | Load | `khi load` | `LOAD <bare name>` |
 | Save | `khi save` | `SAVE[/<qualifier>] <bare name>` |
-| DeleteP | `khi load --replace`, once per name from `ProgramHeaderReader` | `DELETE/P <program>` |
-| ConfirmDelete | Only if capture (k) shows the controller asking to confirm a DELETE/P | as capture (k) shows |
 
-Typed input in `khi term` is not a `ControllerCommand`. It is content passed through unchanged.
+Typed input in `khi term`, and the person's answer to a question during `khi load`, are not `ControllerCommand`s. They are content passed through unchanged (Article III, v3.0.0).
 
 ## Files
-
-### ProgramHeader
-
-A program name read from a `.PROGRAM` header line under `--replace`. Only lines starting `.PROGRAM ` are read, and only the name in them (research R14). Repeated names are taken once, in file order. A file with no header lines produces none, and the load goes ahead as a plain LOAD.
 
 ### SaveTarget
 
@@ -65,6 +59,10 @@ The file a save writes.
 | TempPath | In the same folder: `.<name>.<8 random hex>.khi-tmp` |
 
 `Created` → `Writing` → `Committed` (the temporary file is renamed over the target) or `Abandoned` (the temporary file is deleted). The target changes only on `Committed`. If the folder is missing or cannot be written, khi refuses before connecting.
+
+### SaveLineRule
+
+The one door for whether a line the controller prints outside the file data during a SAVE is normal (FR-040). The normal lines are the ones captures (d), (e), (f), (g) and (h) show on a good SAVE, listed in research R17. Any other line is kept verbatim as an `UnknownSaveLine`, and one or more of them fails the save.
 
 ## Session
 
@@ -81,10 +79,9 @@ The file a save writes.
 | CommandReply | the reply to `<command>` |
 | TransferData | transfer data |
 | TransferEnd | the end of the transfer |
-| DeleteReply | the reply to `DELETE/P <program>` |
 | TypedTransfer | a typed `<SAVE or LOAD>` |
 
-Values come from the captures (research R9). `TerminalRelay`, after login, is the only wait with no timeout.
+Values come from the captures (research R9). `TerminalRelay` after login, and the wait for the person's answer to a question during `khi load`, are the only waits with no timeout (Article X, v3.0.0).
 
 ### Session states
 
@@ -97,22 +94,20 @@ Any waiting state → TimedOut (exit 3) | ConnectionLost (exit 4)
 **Load**:
 
 ```text
-Ready ─ no --replace ─────────────────────────────→ SendingLoad
-Ready ─ --replace → Deleting(name 1..n) ──────────→ SendingLoad
-                    ├ P1038 reply → next name (not a refusal)
-                    ├ confirmation asked → ConfirmDelete as captured → next name
-                    ├ refusal, or any reply not among the captured replies → Stopped (no LOAD; exit 1)
-                    └ no reply before timeout → TimedOut (name marked possibly deleted)
-SendingLoad → Streaming → AwaitingCompletion → Done (exit 0)
-                                             ├ controller error → Failed (exit 1)
-                                             └ question → Failed (no answer; exit 1)
+Ready → SendingLoad → Streaming → AwaitingCompletion → Done (exit 0)
+                                                     ├ controller error → Failed (exit 1)
+                                                     └ question → AwaitingAnswer (no time limit)
+AwaitingAnswer → the person's answer sent as typed, Ctrl+C included → AwaitingCompletion
+AwaitingAnswer → console closed or input ended → Closed (exit 1; the controller may still be waiting)
 ```
 
 **Save**:
 
 ```text
 Ready → SendingSave → Receiving (into SaveTarget.TempPath) → TransferComplete
+Receiving → an UnknownSaveLine is kept, and the save goes on to the end of the transfer
 TransferComplete → Committed (exit 0) | ReplaceFailed (exit 5; target untouched)
+TransferComplete with any UnknownSaveLine → Failed (exit 1; target untouched; each line printed verbatim)
 Any failure before Committed → Abandoned (temporary file deleted)
 ```
 
@@ -143,8 +138,6 @@ Every run of `khi load` and `khi save` ends with one result line built from this
 | File | the path as the person gave it |
 | Bytes | file content only, sent or written; never protocol traffic |
 | Programs | names the controller reported, in its order; empty when it reported none |
-| Deleted | `--replace` only: every program whose DELETE/P the controller accepted |
-| PossiblyDeleted | `--replace` only: programs whose DELETE/P got no reply before a timeout |
 | ExitCode | see the exit codes in [contracts/cli.md](contracts/cli.md) |
 
 ## Captures
@@ -153,7 +146,7 @@ These live in the test project. The format is in [contracts/capture-format.md](c
 
 | Concept | What it is |
 |---------|------------|
-| Capture | One recorded session: an ID from (a) to (l), an exchange log, a note, and the files KRterm wrote or read |
+| Capture | One recorded session: an ID from (a) to (o), with a suffix for an extra such as `c-load-rejected-ctrl-c`, an exchange log, a note, and the files KRterm wrote or read |
 | CaptureRecord | One chunk of bytes: its direction (`C` toward the controller, `S` from it), the time since the start, and the bytes |
 | PayloadRegion | A run of `C` or `S` records that carries file content, marked in the note so the stand-in can compare it with a fixture instead of the captured file |
 | TypedRegion | A run of `C` records that the person typed, marked so a test can supply its own input |

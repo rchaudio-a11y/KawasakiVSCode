@@ -7,9 +7,10 @@ The tasks a program repository copies into `.vscode/tasks.json` (FR-029 to FR-03
 | Label | Command | Problem matcher |
 |-------|---------|-----------------|
 | khi: Load current file | `khi load "${file}"` | both patterns below |
-| khi: Replace from current file | `khi load "${file}" --replace` | both patterns below |
 | khi: Save controller to file | `khi save "${input:khiSaveFile}" ${input:khiSaveQualifier}` | none |
 | khi: Open terminal | `khi term` | none |
+
+**The load task takes input**: its `presentation` reveals and focuses its terminal (`"reveal": "always"`, `"focus": true`), so the person can answer a question the controller asks during the load (FR-021).
 
 ## Inputs
 

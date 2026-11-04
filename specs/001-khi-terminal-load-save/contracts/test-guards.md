@@ -10,7 +10,7 @@ Each runtime guard also has a test through `KhiApp.Run` (Article XIII).
 |-------|------|------|
 | INV-1 Not an editor | Protocol, capture (b) with a fixture holding trailing spaces, tabs and mixed line endings | Trim trailing whitespace before sending |
 | INV-2 Not a robot runner | Suite-wide: the union of every recorded command against the allowed set | Send ERESET before LOAD |
-| INV-3 Not a guesser | Conformance: every protocol test names a capture, and none writes its own reply except INV-18's altered-reply test | Add a test with a hand-written expected reply |
+| INV-3 Not a guesser | Conformance: every protocol test names a capture, and none writes its own reply | Add a test with a hand-written expected reply |
 | INV-4 Not destructive on the PC side | Protocol, capture (d) cut mid-transfer, plus a timeout and capture (h) | Write straight to the target |
 | INV-5 No transfer hangs | Protocol, silent at connect, at login and mid-transfer for load and save; term before login | Remove the timeout on one read |
 | INV-6 The terminal waits on the person | Protocol, capture (a), silent after login; closed by the stand-in; ended with Ctrl+] | Apply the transfer timeout to the relay |
@@ -18,14 +18,12 @@ Each runtime guard also has a test through `KhiApp.Run` (Article XIII).
 | INV-8 Acceptance against K-ROSET | By hand, [quickstart.md P3](../quickstart.md#p3-acceptance-in-vs-code) | Not applicable (acceptance) |
 | INV-9 The constitution | Every review gate shown passing at merge | Not applicable (review) |
 | INV-10 Typed transfers bounded and safe | Protocol, capture (f), silent and closed mid typed SAVE | Apply the terminal's unlimited wait to the typed transfer |
-| INV-11 No answers on the person's behalf | Protocol, capture (c) at the question | Send `1` at the question |
+| INV-11 No answers on the person's behalf | Protocol, capture (c) at the question: nothing sent while the test types nothing, past every transfer timeout; then captures (n) and (o) with `0` and `1` typed, and `c-load-rejected-ctrl-c` with Ctrl+C | Send `1` at the question before the test types |
 | INV-12 The path stays on the PC | Protocol, capture (b), file given by full path | Send the full path |
-| INV-13 Replacing is the person's choice | Protocol, capture (k), with and without `--replace` | Send DELETE/P without the flag |
 | INV-14 Ctrl+C belongs to the controller | Protocol, capture (a), redirected input carrying 0x03 then 0x1D | Close the session on Ctrl+C |
-| INV-15 Header lines and nothing else | Unit test on `ProgramHeaderReader`, then a protocol test under `--replace` | Match `.PROGRAM` anywhere in a line |
-| INV-16 A replace reports what it touched | Protocol, capture (k), connection dropped during LOAD | Report only on success |
-| INV-17 A new program loads | Protocol, capture (k) with a P1038 reply | Treat P1038 as a refusal |
-| INV-18 An unrecognised reply stops the replace | Protocol, capture (k) with one DELETE/P reply altered; asserts no LOAD and every deleted program named | Proceed to LOAD on an unrecognised reply |
+| INV-19 A SAVE with an unknown line fails | Protocol, capture (h): the line printed verbatim, the target untouched, exit 1; captures (d), (e) and (g) succeed | Accept any line outside the file data |
+
+INV-13, INV-15, INV-16, INV-17 and INV-18 were removed on 2026-11-04 with `--replace`.
 
 ## Conformance guards for the hard rules
 
@@ -42,4 +40,4 @@ Once code exists, these are proved with CodeMem `references` or `type_usages` ag
 
 - Only `TerminalRelay` calls the unbounded read.
 - `ControllerConnection.Send` is reached only with a `ControllerCommand`, `TransferFraming` bytes, or pass-through content.
-- `RobotSelection.Resolve`, `SaveQualifier.Parse` and `ProgramHeaderReader` are the only places their rules are applied.
+- `RobotSelection.Resolve`, `SaveQualifier.Parse` and `SaveLineRule` are the only places their rules are applied.
