@@ -57,7 +57,9 @@ Public NotInheritable Class LoadVerb
         Try
             Using connection As ControllerConnection = ControllerConnection.Connect(robot, timeouts)
                 LoginSequence.Run(connection)
-                operation = New LoadOperation(connection, content, New PersonInput(input), output)
+                ' Keys from the console are echoed by nobody else, so the answer is echoed as it is typed.
+                Dim person As New PersonInput(input, If(TypeOf input Is ConsoleKeySource, output, Nothing))
+                operation = New LoadOperation(connection, content, person, output)
                 operation.Run(command)
             End Using
         Catch refusal As KhiRefusal

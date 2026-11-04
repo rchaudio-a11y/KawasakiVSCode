@@ -121,6 +121,8 @@ Constitution 2.0.1 makes this test the rule.
 
 **Rationale**: Article VIII wants output unaltered, and FR-014 and FR-041 want Ctrl+C discarded and Ctrl+] local (Architect, 2026-11-04, reversing the earlier relay of Ctrl+C).
 
+**Checked on 2026-11-04, by the Architect in VS Code's terminal against K-ROSET**: with the console read as a stream, Ctrl+C at a load question ended the read with no bytes. khi took that as the end of input and closed the session at the question. So the console is now read as keys whenever input is not redirected (`ConsoleKeySource`, T084 and T087, brought forward from User Story 4). Since nothing else echoes keys read this way, `PersonInput` echoes the answer as it is typed, and Backspace erases within it (Architect, 2026-11-04). The Architect repeated the check after the fix, with K-ROSET restarted, and it passed: khi kept waiting through Ctrl+C at the question, and the answer typed then went through. In the same session `khi load` loaded a good program into K-ROSET from VS Code. A task's terminal is checked at acceptance (T098).
+
 **To verify in acceptance**: VS Code's integrated terminal passes Ctrl+] and the other keys of manual 2.4.1 through to khi; the editor binds Ctrl+] only while a text editor has focus. The console-close signal reaches khi before VS Code ends the process. If keys are held back, check `terminal.integrated.sendKeybindingsToShell` and report what was needed, as the Architect ruled.
 
 **Alternatives considered**: Reading lines gives up the controller's own line editing, its Ctrl+L and Ctrl+N recall, and character echo.

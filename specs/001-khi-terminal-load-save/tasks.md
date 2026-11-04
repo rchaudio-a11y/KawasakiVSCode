@@ -329,6 +329,7 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
   - Reads the input stream and drops every `03`, Ctrl+C (FR-014, FR-041).
   - Reports `1d`, Ctrl+], and end of input.
   - Returns a line typed up to Enter as its bytes followed by `0d 0a`.
+  - *Extended 2026-11-04 after the Architect's Ctrl+C check: Backspace erases within the line, and the line is echoed as it is typed when the keys come from the console (`ConsoleKeySource`), since nothing else echoes them. The answer still goes as one line at Enter.*
 - [x] T063 [US2] Implement `src/KawasakiVSCode.Core/Transfer/LoadOperation.vb`:
   - **Start**: the command (D1). The `A` block naming the bare name is answered.
   - **Blocks**: one `C` block per controller `C` request, up to 512 file bytes each; a block shorter than 512, an empty one included, is the last, and the next request gets the end-of-file block (FR-016; captures (b), (l), (q), (r), (s)).
@@ -458,7 +459,7 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
   - The target is byte-identical to before, with no temporary file.
   - Fire: apply the terminal's unlimited wait to the typed transfer.
 - [ ] T083 [P] [US4] Write `tests/KawasakiVSCode.Tests/Protocol/TypedQuestionTests.vb` `<Capture("n-load-question-0")>` typed: at the question, with nothing typed, khi stays open past every transfer timeout (FR-015, Article X, v3.1.0); then the keystrokes `0` and Enter reach the controller unchanged, and the session returns to the prompt (User Story 4 scenario 9). Fire: apply the `TypedTransfer` timeout to the wait at the question
-- [ ] T084 [P] [US4] Write `tests/KawasakiVSCode.Tests/Cli/ConsoleKeySourceTests.vb` on `ConsoleKeySource.KeyToBytes`: Enter gives `0d 0a`, Ctrl+C `03`, Ctrl+] `1d`, and a printable key its ASCII byte (research R8)
+- [x] T084 [P] [US4] Write `tests/KawasakiVSCode.Tests/Cli/ConsoleKeySourceTests.vb` on `ConsoleKeySource.KeyToBytes`: Enter gives `0d 0a`, Ctrl+C `03`, Ctrl+] `1d`, and a printable key its ASCII byte (research R8)
 - [ ] T085 [P] [US4] Write U3 in `tests/KawasakiVSCode.Tests/Protocol/TypedLineAsTypedTests.vb` `<Capture("a-connect-login")>`:
   - After the prompt, the test types `load capb.as` and Enter, and then `SAVE/P capd.as` and Enter.
   - The stand-in records exactly `6c 6f 61 64 20 63 61 70 62 2e 61 73 0d 0a` and then the SAVE line's bytes and `0d 0a`, with no `18` and no repeated line (FR-013). These are client bytes after the capture's last record, so they are recorded, not compared.
@@ -470,9 +471,10 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
 
 ### Implementation for User Story 4
 
-- [ ] T087 [US4] Implement `src/KawasakiVSCode.Cli/ConsoleKeySource.vb` (research R8):
+- [x] T087 [US4] Implement `src/KawasakiVSCode.Cli/ConsoleKeySource.vb` (research R8):
   - **Interactive**: `Console.TreatControlCAsInput = True` and `Console.ReadKey(intercept:=True)`, mapped by `KeyToBytes` and presented as a `Stream`.
   - **Redirected**: input read raw from standard input.
+  - *Brought forward to User Story 2 on 2026-11-04, with T084: in VS Code's terminal, with the console read as a stream, Ctrl+C at a load question ended the read and khi took it as the end of input (research R8). It echoes nothing; `PersonInput` echoes the line it collects.*
 - [ ] T088 [US4] Implement `src/KawasakiVSCode.Core/Terminal/TypedTransfer.vb`:
   - **On an `A` block**: the LOAD PC end, from `LoadOperation`'s block loop, against the named file in the current folder; `A-1052` when the file is missing.
   - **On a `B` block**: the SAVE PC end, from `SaveOperation`, into a `SaveTarget` for the announced name, under `SaveLineRule`.
@@ -536,6 +538,7 @@ These are Article XIII reachability tests over doors already proved Red-first in
   - The typed `SAVE x.as`, which also settles U3.
   - Ctrl+C with nothing selected, which should do nothing.
   - `terminal.integrated.sendKeybindingsToShell`, if VS Code holds back Ctrl+].
+  - Ctrl+C at a load question, run from *khi: Load current file*: khi keeps waiting, then the typed answer goes through. A task's terminal is not the one the person types commands in, and the check of 2026-11-04 was run only in the latter (research R8).
 
   Record the stamped lines two full saves differ by (INV-8, SC-009) in `specs/001-khi-terminal-load-save/quickstart.md`, P3 step 4.
 
