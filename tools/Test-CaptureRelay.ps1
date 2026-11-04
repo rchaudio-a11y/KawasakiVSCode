@@ -15,6 +15,9 @@
     byte" checks failed (6 failures). The relay was restored, identical by SHA-256; green.
   - Exit codes: with the relay exiting 1 on both refusals, the "exit 2" and "exit 4" checks
     failed (2 failures). Fixed to 2 and 4; green.
+  - First record at 0.000: written before the fix, against a relay that read the clock after
+    forwarding each chunk. Red: the first record read 0.007 (1 failure). Stamped on receipt, before
+    forwarding; green.
 #>
 [CmdletBinding()]
 param()
@@ -142,8 +145,10 @@ try {
         $streams = @{ C = New-Object System.Collections.Generic.List[byte]; S = New-Object System.Collections.Generic.List[byte] }
         $lastTime = -1.0
         $timesInOrder = $true
+        $firstTime = $null
         foreach ($record in $records) {
             if ($record -notmatch $pattern) { $wellFormed = $false; continue }
+            if ($null -eq $firstTime) { $firstTime = $Matches[2] }
             $time = [double]::Parse($Matches[2], [System.Globalization.CultureInfo]::InvariantCulture)
             if ($time -lt $lastTime) { $timesInOrder = $false }
             $lastTime = $time
@@ -151,6 +156,7 @@ try {
         }
         Test-That $wellFormed 'every log record is direction, time, hex and preview'
         Test-That $timesInOrder 'log times never go backwards'
+        Test-That ($firstTime -eq '0.000') "first record reads 0.000, times counting from the first byte (read $firstTime)"
         Test-That (Test-SameBytes $streams['S'].ToArray() ([byte[]]($prompt + $every))) 'log holds every controller byte, in order'
         Test-That (Test-SameBytes $streams['C'].ToArray() ([byte[]]($typed + $every))) 'log holds every client byte, in order'
 

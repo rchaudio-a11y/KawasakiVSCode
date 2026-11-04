@@ -74,7 +74,8 @@ try {
     Write-Host "khi relay: connected to ${TargetHost}:$TargetPort; logging to $outPath"
 
     $buffer = New-Object byte[] 65536
-    $clock = $null
+    $clock = [System.Diagnostics.Stopwatch]::StartNew()
+    $zero = $null   # time zero is the receipt of the first byte (capture-format.md)
     $routes = @(
         @{ From = $clientSocket; To = $targetSocket; Direction = 'C' },
         @{ From = $targetSocket; To = $clientSocket; Direction = 'S' })
@@ -86,14 +87,15 @@ try {
             $count = 0
             try { $count = $route.From.Receive($buffer) } catch [System.Net.Sockets.SocketException] { $count = 0 }
             if ($count -le 0) { $open = $false; $closedBy = $route.Direction; break }
-            if ($null -eq $clock) { $clock = [System.Diagnostics.Stopwatch]::StartNew() }
+            $now = $clock.Elapsed.TotalSeconds   # stamped on receipt, before forwarding
+            if ($null -eq $zero) { $zero = $now }
             $sent = 0
             try {
                 while ($sent -lt $count) {
                     $sent += $route.To.Send($buffer, $sent, $count - $sent, [System.Net.Sockets.SocketFlags]::None)
                 }
             } catch [System.Net.Sockets.SocketException] { $open = $false; $closedBy = $route.Direction }
-            Write-Record $route.Direction $clock.Elapsed.TotalSeconds $buffer $count
+            Write-Record $route.Direction ($now - $zero) $buffer $count
             $records++
             $byteCounts[$route.Direction] += $count
             $moved = $true
