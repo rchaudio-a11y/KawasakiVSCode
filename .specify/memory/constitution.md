@@ -37,10 +37,14 @@ program deleted, whether the load then succeeds or fails. A reply that the progr
 (P1038) is not a refusal; that program simply loads. If the controller asks to confirm a DELETE/P,
 the tool confirms it for that program only, as the capture shows. Any other question from the
 controller during --replace stops before LOAD, and the output names every program already deleted.
+When the controller asks a question during khi load itself, the tool hands it to the person. It shows
+the question in the controller's words, sends the one answer the person types, and reads on. It never
+answers such a question on its own.
 Everything else the tool sends is either
 protocol traffic governed by Article IV — telnet negotiation replies and transfer framing — or content
-it passes through unchanged: the bytes of the file being loaded (Article II) and what the person types
-in the terminal verb. In the terminal verb it adds no command. No path issues motion, execution, motor
+it passes through unchanged: the bytes of the file being loaded (Article II), the answer the person
+types to a question during khi load, and what the person types in the terminal verb. In the terminal
+verb it adds no command. No path issues motion, execution, motor
 power, error reset or any other controller command the person did not type.
 
 **Rationale:** A robot can hurt people and damage equipment, so the person decides what reaches it, by typing it or by choosing --replace.
@@ -51,8 +55,9 @@ Every byte sequence the tool itself originates or waits for — telnet negotiati
 verb's command, the DELETE/P commands under --replace, and the transfer framing around a file — is backed by a captured exchange with a real
 Kawasaki terminal session (KRterm against K-ROSET or a controller), checked into the test project
 with a note of what was captured, against what, and when. A behaviour with no capture behind it is
-not implemented. The bytes of a file being loaded (Article II) and what the person types in the
-terminal verb (Article III) pass through unchanged and are outside this article.
+not implemented. The bytes of a file being loaded (Article II), the answer the person types to a
+question during khi load, and what the person types in the terminal verb (Article III) pass through
+unchanged and are outside this article.
 
 **Rationale:** Protocol bytes no real session has been seen to exchange are guesses; content passed through is the person's, not the tool's guess.
 
@@ -106,8 +111,10 @@ it (Article XVI).
 ### Article X — Bounded Waits
 
 Every wait during connect, login and a LOAD or SAVE transfer has a timeout, so neither transfer verb
-can hang. A timeout is reported as a timeout, naming the step that was waiting, and leaves the
-session closed. After login, the terminal verb waits on the person without limit. When the person
+can hang, except the wait for the person's answer to a question during khi load, which is the
+person's, as in the terminal verb. A timeout is reported as a timeout, naming the step that was
+waiting, and leaves the session closed. After login, the terminal verb waits on the person without
+limit. When the person
 ends the session it exits with code zero; if the controller closes the connection, it reports that
 and exits non-zero.
 
@@ -179,9 +186,10 @@ Every plan, task list and implementation review verifies:
 - Every byte sequence the tool originates or awaits traces to a checked-in capture; file content and typed input are outside the check (Art. IV).
 - Every command, qualifier and controller message relied on cites a manual number and section (Art. XVI).
 - No path issues a controller command other than login, the running verb's own command and, under load --replace, DELETE/P for the programs the file's .PROGRAM lines name (Art. III), asserted by a test that records every command sent across all verbs and compares it to the allowed set; without --replace, no DELETE/P is ever sent; under --replace, a refused delete loads nothing and every deleted program is named in the output; a P1038 reply proceeds to LOAD, and an unexpected question sends no LOAD; LOAD's file content is checked separately, byte for byte against the file on disk.
+- At a question during khi load, the tool sends only what the person typed, and nothing until they type, asserted by replaying the question capture and checking the bytes sent (Art. III).
 - Every new guard carries its fire demonstration (Art. VII) and a production-route test (Art. XIII).
 - No rule validated at two doors.
-- Every wait during connect, login and transfer has a timeout, and the terminal relay after login is the only unbounded wait (Art. X).
+- Every wait during connect, login and transfer has a timeout; the terminal relay after login and the wait for the person's answer to a question during khi load are the only unbounded waits (Art. X).
 - Header block and XML docs on every new or modified file.
 - Any new abstraction justified by three call sites in hand.
 
@@ -197,5 +205,6 @@ obligations, PATCH for wording.
 
 - **2026-11-02, 1.0.0 to 2.0.0.** Architect approval: given. Rationale: edit-and-reload: LOAD refuses a program name already in memory (AS Language Reference Manual §5.3), so the person can choose to replace; replacement deletes with DELETE/P only (§5.2). Migration path: none — nothing is built.
 - **2026-11-03, 2.0.0 to 2.0.1.** Architect approval: given. Rationale: the VB.NET compiler does not warn on a missing XML comment (probe at plan); enforcement moves to a test. Migration path: none — nothing is built.
+- **2026-11-04, 2.0.1 to 3.0.0.** Architect approval: given. Rationale: on K-ROSET, closing the session at a LOAD question left the controller serving no new connection until it was restarted (captures (c), `c-load-rejected-reconnect`). Handing the question to the person avoids that, and the tool still never answers on its own: Article III hands a question during khi load to the person, Article IV leaves the person's answer outside the article, Article X leaves the wait for that answer without limit, and a review gate asserts the tool sends only what the person typed. Migration path: none — nothing is built.
 
-**Version**: 2.0.1 | **Ratified**: 2026-11-02 | **Last Amended**: 2026-11-03
+**Version**: 3.0.0 | **Ratified**: 2026-11-02 | **Last Amended**: 2026-11-04
