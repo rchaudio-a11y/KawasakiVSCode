@@ -2,6 +2,8 @@
 
 **Status**: Confirmed by the Architect, 2026-11-04.
 
+**Record only** (the Architect's ruling of 2026-11-04): khi never relays Ctrl+C, so no behaviour replays this capture. It is kept as a record of what the controller does with `03` at the LOAD question.
+
 This session was taken as capture (c) and kept, by the Architect's ruling of 2026-11-03, as an extra capture. At the controller's question the Architect pressed Ctrl+C to copy the screen text, and KRterm sent it to the controller as `03`, so the session did not close at the question as (c) requires. Capture (c) was retaken in `c-load-rejected`.
 
 ## What was done
