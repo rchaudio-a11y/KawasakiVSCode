@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/KawasakiVSCode.Cli/KawasakiVSCode.Cli.vbproj" />
+    <Project Path="src/KawasakiVSCode.Core/KawasakiVSCode.Core.vbproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/KawasakiVSCode.Tests/KawasakiVSCode.Tests.vbproj" />
+  </Folder>
+</Solution>

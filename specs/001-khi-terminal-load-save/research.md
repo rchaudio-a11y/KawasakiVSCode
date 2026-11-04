@@ -73,6 +73,8 @@ Constitution 2.0.1 makes this test the rule.
 
 **Rationale**: Checked here: restoring the template's `MSTest` 4.0.2 meta-package pulled in `Microsoft.Testing.Extensions.Telemetry` and `Microsoft.Testing.Extensions.CodeCoverage`. The three packages are Microsoft's and work with VB.
 
+**The first restore, 2026-11-04 (T007)**: the three packages resolved as `MSTest.TestFramework` 4.5.2, `MSTest.TestAdapter` 4.5.2 and `Microsoft.NET.Test.Sdk` 18.11.0. Referenced directly, they still bring in `Microsoft.Testing.Extensions.Telemetry` 2.5.2 and `Microsoft.ApplicationInsights` 2.23.0 (through `MSTest.TestAdapter`), and `Microsoft.CodeCoverage` 18.11.0 (through `Microsoft.NET.Test.Sdk`). So, as the decision says, every test run sets `TESTINGPLATFORM_TELEMETRY_OPTOUT=1`, and `DOTNET_CLI_TELEMETRY_OPTOUT=1` for the CLI. Code coverage runs only when asked for with `--collect`, which this project never does. Referencing the packages directly no longer keeps these out, so the plan's reason for avoiding the meta-package is weaker than it was; the Architect may rule on it.
+
 **Alternatives considered**: xUnit and NUnit both have VB templates, but neither is lighter, and MSTest is Microsoft's.
 
 ## R6 Command-line parsing
@@ -115,6 +117,19 @@ Constitution 2.0.1 makes this test the rule.
 - **Typed transfers**: Inside a typed transfer, every keystroke the person sends starts a new wait, so a controller question can be answered without running out the timer, and every wait stays bounded (Article X).
 - **A question during `khi load`**: The wait for the person's answer has no timeout (Article X, v3.0.0). The waits before the question and after the answer keep theirs.
 - **Tests**: `Timeouts` is a parameter of `KhiApp.Run`; `Main` passes the defaults and tests pass short values. There is no person-facing timeout option.
+
+**The table** (T017, measured 2026-11-04 over captures (a) to (o) and the three extras; (p) and (q) are measured when they are checked in). A gap is the time from the record before to the controller's record. Three times the longest gap, 348 ms, is far under the floor, so every step is 10 seconds.
+
+| WaitStep | Value | Longest gap seen | Where |
+|----------|-------|------------------|-------|
+| `Connect` | 10 s | Not captured: the relay records bytes, not the connect | — |
+| `Negotiation` | 10 s | 81 ms | (l) record 2 |
+| `LoginPrompt` | 10 s | 81 ms; `login: ` comes in the same record as `ff fd 18` | (l) record 2 |
+| `LoginReply` | 10 s | 36 ms | (a) record 8 |
+| `CommandReply` | 10 s | 81 ms for the echo of a line sent whole; 64 ms after `18` and the line | (i) record 10; (b) record 34 |
+| `TransferData` | 10 s | 39 ms after a LOAD block; 116 ms between the controller's records in a SAVE | (l) record 196; (g) record 16 |
+| `TransferEnd` | 10 s | 34 ms after the `E` answer | (c-load-rejected-ctrl-c) record 46 |
+| `TypedTransfer` | 10 s | 81 ms between the controller's records in the typed SAVE | (f) record 16 |
 
 **Rationale**: Article X, plus the spec's edge case on typed transfers. Checked here: KRterm's own setting is `TimeoutSec=600`, which is far looser than khi needs.
 

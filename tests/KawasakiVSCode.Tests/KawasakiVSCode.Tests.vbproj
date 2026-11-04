@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>KawasakiVSCode.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <OptionStrict>On</OptionStrict>
+    <OptionExplicit>On</OptionExplicit>
+    <OptionInfer>Off</OptionInfer>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\KawasakiVSCode.Core\KawasakiVSCode.Core.vbproj" />
+    <ProjectReference Include="..\..\src\KawasakiVSCode.Cli\KawasakiVSCode.Cli.vbproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Captures\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Fixtures\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="4.5.2" />
+    <PackageReference Include="MSTest.TestFramework" Version="4.5.2" />
+  </ItemGroup>
+
+</Project>

@@ -57,12 +57,12 @@ The Architect accepted D1, D2 and D4, added a fallback to D3 and a test to D5, a
 **Purpose**: The solution, its three projects, and nothing else (Article I).
 
 - [x] T001 Mark `tests/KawasakiVSCode.Tests/Captures/**` and `tests/KawasakiVSCode.Tests/Fixtures/**` `-text` in `.gitattributes` (research R13); done before the first capture
-- [ ] T002 Create `.gitignore` at the repository root ignoring `bin/`, `obj/`, `.vs/`, `TestResults/` and `*.user`
-- [ ] T003 [P] Write `src/KawasakiVSCode.Core/KawasakiVSCode.Core.vbproj` by hand (research R3): `Microsoft.NET.Sdk`, `TargetFramework` `net10.0`, `RootNamespace` `KawasakiVSCode.Core`, `OptionStrict` `On`, `OptionExplicit` `On`, `OptionInfer` `Off`, `GenerateDocumentationFile` `true`, `LangVersion` `latest`; no `Nullable`, no `ImplicitUsings`, no package reference
-- [ ] T004 [P] Write `src/KawasakiVSCode.Cli/KawasakiVSCode.Cli.vbproj` the same way, plus `OutputType` `Exe`, `AssemblyName` `khi`, `RootNamespace` `KawasakiVSCode.Cli` and a project reference to Core
-- [ ] T005 [P] Write `tests/KawasakiVSCode.Tests/KawasakiVSCode.Tests.vbproj` the same way, plus `IsPackable` `false`, package references `MSTest.TestFramework`, `MSTest.TestAdapter` and `Microsoft.NET.Test.Sdk` (not the `MSTest` meta-package, research R5), project references to Core and Cli, and `Captures\**` and `Fixtures\**` copied to the output folder with `CopyToOutputDirectory` `PreserveNewest`
-- [ ] T006 Create `KawasakiVSCode.slnx` at the repository root with `dotnet new sln -n KawasakiVSCode`, then `dotnet sln KawasakiVSCode.slnx add` the three project files
-- [ ] T007 Run `dotnet restore KawasakiVSCode.slnx` and `dotnet list tests/KawasakiVSCode.Tests/KawasakiVSCode.Tests.vbproj package --include-transitive`; confirm neither `Microsoft.Testing.Extensions.Telemetry` nor `Microsoft.Testing.Extensions.CodeCoverage` comes in (research R5); if one does, record it in `specs/001-khi-terminal-load-save/research.md` R5 and set `TESTINGPLATFORM_TELEMETRY_OPTOUT=1` for test runs
+- [x] T002 Create `.gitignore` at the repository root ignoring `bin/`, `obj/`, `.vs/`, `TestResults/` and `*.user`
+- [x] T003 [P] Write `src/KawasakiVSCode.Core/KawasakiVSCode.Core.vbproj` by hand (research R3): `Microsoft.NET.Sdk`, `TargetFramework` `net10.0`, `RootNamespace` `KawasakiVSCode.Core`, `OptionStrict` `On`, `OptionExplicit` `On`, `OptionInfer` `Off`, `GenerateDocumentationFile` `true`, `LangVersion` `latest`; no `Nullable`, no `ImplicitUsings`, no package reference
+- [x] T004 [P] Write `src/KawasakiVSCode.Cli/KawasakiVSCode.Cli.vbproj` the same way, plus `OutputType` `Exe`, `AssemblyName` `khi`, `RootNamespace` `KawasakiVSCode.Cli` and a project reference to Core
+- [x] T005 [P] Write `tests/KawasakiVSCode.Tests/KawasakiVSCode.Tests.vbproj` the same way, plus `IsPackable` `false`, package references `MSTest.TestFramework`, `MSTest.TestAdapter` and `Microsoft.NET.Test.Sdk` (not the `MSTest` meta-package, research R5), project references to Core and Cli, and `Captures\**` and `Fixtures\**` copied to the output folder with `CopyToOutputDirectory` `PreserveNewest`
+- [x] T006 Create `KawasakiVSCode.slnx` at the repository root with `dotnet new sln -n KawasakiVSCode`, then `dotnet sln KawasakiVSCode.slnx add` the three project files
+- [x] T007 Run `dotnet restore KawasakiVSCode.slnx` and `dotnet list tests/KawasakiVSCode.Tests/KawasakiVSCode.Tests.vbproj package --include-transitive`; confirm neither `Microsoft.Testing.Extensions.Telemetry` nor `Microsoft.Testing.Extensions.CodeCoverage` comes in (research R5); if one does, record it in `specs/001-khi-terminal-load-save/research.md` R5 and set `TESTINGPLATFORM_TELEMETRY_OPTOUT=1` for test runs
 
 ---
 
@@ -76,48 +76,48 @@ The Architect accepted D1, D2 and D4, added a fallback to D3 and a test to D5, a
 
 These pass on an empty code base, which is not Red. Each is shown red by its fire demonstration in T042, once code exists.
 
-- [ ] T008 [P] Write `tests/KawasakiVSCode.Tests/Conformance/RepositoryPaths.vb`: finds the repository root by walking up from the test assembly's folder to the one holding `KawasakiVSCode.slnx`, and lists every `.vbproj` and `.vb` file under `src/` and `tests/`, skipping `bin/` and `obj/`
-- [ ] T009 [P] Write `tests/KawasakiVSCode.Tests/Conformance/OptionSettingsTests.vb`: every project file sets `OptionStrict` `On`, `OptionExplicit` `On`, `OptionInfer` `Off` and `GenerateDocumentationFile` `true` (review gate 1)
-- [ ] T010 [P] Write `tests/KawasakiVSCode.Tests/Conformance/HeaderBlockTests.vb`: every `.vb` file opens with a comment block giving its file name, the project, a description, the author `RCH Automation LLC` and a created date
-- [ ] T011 [P] Write `tests/KawasakiVSCode.Tests/Conformance/OneTypePerFileTests.vb`: every `.vb` file declares exactly one top-level `Class`, `Module`, `Interface`, `Enum` or `Structure` (Article I)
-- [ ] T012 [P] Write `tests/KawasakiVSCode.Tests/Conformance/XmlDocCoverageTests.vb` (research R4): load `KawasakiVSCode.Core.dll` and `khi.dll` from the test output folder, list every public type and its public methods, properties, events and interface members, and fail for each with no `<summary>` in `KawasakiVSCode.Core.xml` or `khi.xml`
+- [x] T008 [P] Write `tests/KawasakiVSCode.Tests/Conformance/RepositoryPaths.vb`: finds the repository root by walking up from the test assembly's folder to the one holding `KawasakiVSCode.slnx`, and lists every `.vbproj` and `.vb` file under `src/` and `tests/`, skipping `bin/` and `obj/`
+- [x] T009 [P] Write `tests/KawasakiVSCode.Tests/Conformance/OptionSettingsTests.vb`: every project file sets `OptionStrict` `On`, `OptionExplicit` `On`, `OptionInfer` `Off` and `GenerateDocumentationFile` `true` (review gate 1)
+- [x] T010 [P] Write `tests/KawasakiVSCode.Tests/Conformance/HeaderBlockTests.vb`: every `.vb` file opens with a comment block giving its file name, the project, a description, the author `RCH Automation LLC` and a created date
+- [x] T011 [P] Write `tests/KawasakiVSCode.Tests/Conformance/OneTypePerFileTests.vb`: every `.vb` file declares exactly one top-level `Class`, `Module`, `Interface`, `Enum` or `Structure` (Article I)
+- [x] T012 [P] Write `tests/KawasakiVSCode.Tests/Conformance/XmlDocCoverageTests.vb` (research R4): load `KawasakiVSCode.Core.dll` and `khi.dll` from the test output folder, list every public type and its public methods, properties, events and interface members, and fail for each with no `<summary>` in `KawasakiVSCode.Core.xml` or `khi.xml`
 
 ### Exit codes and refusals
 
-- [ ] T013 [P] Write `tests/KawasakiVSCode.Tests/Reporting/ExitCodeTests.vb`: `ExitCode` values Success 0, ControllerError 1, RefusedBeforeConnecting 2, TimedOut 3, ConnectionFailed 4, LocalFileFailed 5 ([contracts/cli.md, Exit codes](contracts/cli.md#exit-codes)); and a `KhiRefusal` built with an exit code and a message carries both unchanged
-- [ ] T014 Implement `src/KawasakiVSCode.Core/Reporting/ExitCode.vb` (the enum) and `src/KawasakiVSCode.Core/Reporting/KhiRefusal.vb` (an exception carrying an `ExitCode` and the message khi prints on stderr)
+- [x] T013 [P] Write `tests/KawasakiVSCode.Tests/Reporting/ExitCodeTests.vb`: `ExitCode` values Success 0, ControllerError 1, RefusedBeforeConnecting 2, TimedOut 3, ConnectionFailed 4, LocalFileFailed 5 ([contracts/cli.md, Exit codes](contracts/cli.md#exit-codes)); and a `KhiRefusal` built with an exit code and a message carries both unchanged
+- [x] T014 Implement `src/KawasakiVSCode.Core/Reporting/ExitCode.vb` (the enum) and `src/KawasakiVSCode.Core/Reporting/KhiRefusal.vb` (an exception carrying an `ExitCode` and the message khi prints on stderr)
 
 ### Timeouts
 
-- [ ] T015 [P] Write `tests/KawasakiVSCode.Tests/Connection/TimeoutsTests.vb`: `Timeouts.Defaults` gives 10 s for every `WaitStep` (`Connect`, `Negotiation`, `LoginPrompt`, `LoginReply`, `CommandReply`, `TransferData`, `TransferEnd`, `TypedTransfer`); each step's message wording is data-model.md's ("connecting to `<address>:<port>`", "telnet negotiation", "the login prompt", "the prompt after login", "the reply to `<command>`", "transfer data", "the end of the transfer", "a typed `<SAVE or LOAD>`"); a test can build `Timeouts` with short values
-- [ ] T016 Implement `src/KawasakiVSCode.Core/Connection/WaitStep.vb` and `src/KawasakiVSCode.Core/Connection/Timeouts.vb`. Each default's XML doc cites research R9: the longest controller reply in any capture is 81 ms ((i) record 10, (l) record 2), three times that is under the 10-second floor
-- [ ] T017 [P] Record in `specs/001-khi-terminal-load-save/research.md` R9 the timeout table: every `WaitStep`, its 10 s value, and the capture and record of the longest reply seen
+- [x] T015 [P] Write `tests/KawasakiVSCode.Tests/Connection/TimeoutsTests.vb`: `Timeouts.Defaults` gives 10 s for every `WaitStep` (`Connect`, `Negotiation`, `LoginPrompt`, `LoginReply`, `CommandReply`, `TransferData`, `TransferEnd`, `TypedTransfer`); each step's message wording is data-model.md's ("connecting to `<address>:<port>`", "telnet negotiation", "the login prompt", "the prompt after login", "the reply to `<command>`", "transfer data", "the end of the transfer", "a typed `<SAVE or LOAD>`"); a test can build `Timeouts` with short values
+- [x] T016 Implement `src/KawasakiVSCode.Core/Connection/WaitStep.vb` and `src/KawasakiVSCode.Core/Connection/Timeouts.vb`. Each default's XML doc cites research R9: the longest controller reply in any capture is 81 ms ((i) record 10, (l) record 2), three times that is under the 10-second floor
+- [x] T017 [P] Record in `specs/001-khi-terminal-load-save/research.md` R9 the timeout table: every `WaitStep`, its 10 s value, and the capture and record of the longest reply seen
 
 ### The stand-in (Article V)
 
-- [ ] T018 [P] Write `tests/KawasakiVSCode.Tests/StandIn/CaptureReaderTests.vb`:
+- [x] T018 [P] Write `tests/KawasakiVSCode.Tests/StandIn/CaptureReaderTests.vb`:
   - `Captures/a-connect-login/exchange.txt` reads as 8 records: record 1 is `C` `ff fb 18` at 0.000, and record 8 is `S` ending `0d 0a 3e`.
   - Lines starting `#` are skipped.
   - `Captures/e-save-full/exchange.txt` reads as 121 records carrying 394,969 bytes from the controller.
-- [ ] T019 Implement `tests/KawasakiVSCode.Tests/StandIn/CaptureRecord.vb` and `tests/KawasakiVSCode.Tests/StandIn/CaptureReader.vb` for the `exchange.txt` format of [contracts/capture-format.md](contracts/capture-format.md#exchangetxt)
-- [ ] T020 Write `tests/KawasakiVSCode.Tests/StandIn/ControllerStandInTests.vb` with a raw `TcpClient`:
+- [x] T019 Implement `tests/KawasakiVSCode.Tests/StandIn/CaptureRecord.vb` and `tests/KawasakiVSCode.Tests/StandIn/CaptureReader.vb` for the `exchange.txt` format of [contracts/capture-format.md](contracts/capture-format.md#exchangetxt)
+- [x] T020 Write `tests/KawasakiVSCode.Tests/StandIn/ControllerStandInTests.vb` with a raw `TcpClient`:
   - Sending capture (a)'s `C` bytes, in any chunking, receives capture (a)'s `S` bytes byte for byte (User Story 1 scenario 2).
   - A wrong client byte fails the stand-in, which reports the record, the expected bytes and the received bytes.
   - `StopAt(record, Silent)` stops sending and holds the connection open. `StopAt(record, Close)` closes it.
   - A slice, records 1 to 8 and then a later range, plays as one capture (D4).
   - Client bytes sent after the capture's last record, or after a `Silent` stop, are recorded and not compared.
-- [ ] T021 Implement `tests/KawasakiVSCode.Tests/StandIn/ControllerStandIn.vb`, a `TcpListener` on 127.0.0.1 with port 0 that serves one client:
+- [x] T021 Implement `tests/KawasakiVSCode.Tests/StandIn/ControllerStandIn.vb`, a `TcpListener` on 127.0.0.1 with port 0 that serves one client:
   - **Replay**: each `S` record's exact bytes are sent once the client has sent everything the capture shows before it.
   - **Checking the client**: client bytes outside payload and typed regions must equal the captured `C` bytes.
   - **Payload regions**: each region the test names (record and first byte) runs to its block's closing `17` and is compared with the fixture the test gives, so a fixture of another length than the captured file still fits.
   - **Typed regions**: their bytes come from the test's own input.
   - **After the end**: client bytes after the capture's last record, or after a `Silent` stop, are recorded and not compared.
   - **No other source**: no member takes controller bytes from anywhere but a capture (INV-3).
-- [ ] T022 Write `tests/KawasakiVSCode.Tests/StandIn/CommandRecorderTests.vb`, then implement `tests/KawasakiVSCode.Tests/StandIn/CommandRecorder.vb` (INV-2):
+- [x] T022 Write `tests/KawasakiVSCode.Tests/StandIn/CommandRecorderTests.vb`, then implement `tests/KawasakiVSCode.Tests/StandIn/CommandRecorder.vb` (INV-2):
   - **Recording**: every client line outside payload regions is recorded as a command: the bytes up to `0d 0a`, with a leading `18` removed.
   - **The allowed set**: the login `as`, `load <name>`, `SAVE <name>`, `SAVE/P <name>`, `SAVE/FULL <name>`, the answer the test typed at a load question, and lines the test typed in `khi term`.
   - **Enforcement**: `ControllerStandIn.Dispose` fails the test if any recorded command is outside the allowed set.
-- [ ] T023 [P] Implement `tests/KawasakiVSCode.Tests/StandIn/CaptureAttribute.vb`: `<Capture("<folder>")>` names the capture a protocol test replays (INV-3)
+- [x] T023 [P] Implement `tests/KawasakiVSCode.Tests/StandIn/CaptureAttribute.vb`: `<Capture("<folder>")>` names the capture a protocol test replays (INV-3)
 
 ### Connection and login
 
@@ -143,15 +143,15 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
   - `ControllerCommand.Save` gives `SAVE capd.as`, `SAVE/P capd.as` and `SAVE/FULL capd.as`.
   - Against the stand-in replaying (i) records 1 to 12, `Send` sends the line, waits for its echo, then sends `18`, the line and `0d 0a`, and returns at `>` + line + `0d 0a` (D1).
 - [ ] T029 Implement `src/KawasakiVSCode.Core/Commands/ControllerCommand.vb` and `ControllerConnection.Send(command)` (D1): the line, `ReadUntil(CommandReply)` for its echo, then `18` + line + `0d 0a`, then `ReadUntil(CommandReply)` for `>` + line + `0d 0a`, as `specs/001-khi-terminal-load-save/data-model.md`'s `ControllerCommand` table gives them
-- [ ] T030 [P] Write `tests/KawasakiVSCode.Tests/Commands/SaveQualifierTests.vb` (FR-024, FR-025):
+- [x] T030 [P] Write `tests/KawasakiVSCode.Tests/Commands/SaveQualifierTests.vb` (FR-024, FR-025):
   - No qualifier gives `SAVE`, `P` gives `SAVE/P`, and `FULL` gives `SAVE/FULL`, as the manual writes them.
   - `L`, `R`, `S`, `A`, `SYS`, `ROB`, `ELOG`, `OPLOG`, `ALLLOG` and `STG` are refused by name as not supported.
   - Anything else is refused by name as unknown.
-- [ ] T031 Implement `src/KawasakiVSCode.Core/Commands/SaveQualifier.vb` with `SaveQualifier.Parse`, the one door (research R15)
+- [x] T031 Implement `src/KawasakiVSCode.Core/Commands/SaveQualifier.vb` with `SaveQualifier.Parse`, the one door (research R15)
 
 ### Robots (Article IX)
 
-- [ ] T032 [P] Write `tests/KawasakiVSCode.Tests/Robots/RobotsFileTests.vb` ([contracts/robots-file.md](contracts/robots-file.md)):
+- [x] T032 [P] Write `tests/KawasakiVSCode.Tests/Robots/RobotsFileTests.vb` ([contracts/robots-file.md](contracts/robots-file.md)):
   - A valid file reads.
   - A missing file gives `khi: no khi.robots.json in <folder>`.
   - Each broken rule gives `khi: khi.robots.json: <what is wrong and where>` with exit 2:
@@ -162,33 +162,33 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
     - A simulator flag broken: "Required; read and type-checked, but no behaviour depends on it in this feature".
     - A default broken: "`Default`, when present, must name an entry".
     - Any unknown key, refused by name.
-- [ ] T033 Implement `src/KawasakiVSCode.Core/Robots/RobotEntry.vb` and `src/KawasakiVSCode.Core/Robots/RobotsFile.vb` with `System.Text.Json` (research R7), reading `khi.robots.json` from the current folder only
-- [ ] T034 Write `tests/KawasakiVSCode.Tests/Robots/RobotSelectionTests.vb`, where every refusal is exit 2 before connecting:
+- [x] T033 Implement `src/KawasakiVSCode.Core/Robots/RobotEntry.vb` and `src/KawasakiVSCode.Core/Robots/RobotsFile.vb` with `System.Text.Json` (research R7), reading `khi.robots.json` from the current folder only
+- [x] T034 Write `tests/KawasakiVSCode.Tests/Robots/RobotSelectionTests.vb`, where every refusal is exit 2 before connecting:
   - `--robot <name>` picks that entry, matched ignoring case as names are unique ignoring case.
   - With no `--robot`, the default is used.
   - With neither, khi refuses with `khi: no --robot given and no default set; robots are: <names>`.
   - An unknown name is refused with `khi: unknown robot <name>; robots are: <names>`.
-- [ ] T035 Implement `src/KawasakiVSCode.Core/Robots/RobotSelection.vb` with `RobotSelection.Resolve`, the one door (research R15)
+- [x] T035 Implement `src/KawasakiVSCode.Core/Robots/RobotSelection.vb` with `RobotSelection.Resolve`, the one door (research R15)
 
 ### The result line
 
-- [ ] T036 [P] Write `tests/KawasakiVSCode.Tests/Reporting/ResultLineTests.vb` ([contracts/cli.md](contracts/cli.md#the-result-line-khi-load-khi-save)):
+- [x] T036 [P] Write `tests/KawasakiVSCode.Tests/Reporting/ResultLineTests.vb` ([contracts/cli.md](contracts/cli.md#the-result-line-khi-load-khi-save)):
   - The form is `khi <verb> <ok|failed>: robot <name>, file "<path>", <n> bytes, programs <a, b | none>`, with the path as the person gave it, bytes of file content only, and `none` when the controller reported no program.
   - The question part reads `; completed with 1 error; answered 0 (Change to comment and continue); the controller's copy differs from the file`, or `; completed with 1 error; answered 1 (Delete program and abort)`.
   - The count reads `<n> errors` when it is above one.
   - There is no parenthesis when the answer matches no choice.
-- [ ] T037 Implement `src/KawasakiVSCode.Core/Reporting/TransferOutcome.vb`, `src/KawasakiVSCode.Core/Reporting/QuestionAnswer.vb` and `src/KawasakiVSCode.Core/Reporting/ResultLine.vb` (data-model TransferOutcome)
+- [x] T037 Implement `src/KawasakiVSCode.Core/Reporting/TransferOutcome.vb`, `src/KawasakiVSCode.Core/Reporting/QuestionAnswer.vb` and `src/KawasakiVSCode.Core/Reporting/ResultLine.vb` (data-model TransferOutcome)
 
 ### The entry point (Article XIII)
 
-- [ ] T038 Write `tests/KawasakiVSCode.Tests/Route/KhiAppArgumentTests.vb` through `KhiApp.Run(args, input, output, error, timeouts)`:
+- [x] T038 Write `tests/KawasakiVSCode.Tests/Route/KhiAppArgumentTests.vb` through `KhiApp.Run(args, input, output, error, timeouts)`:
   - No verb, an unknown verb, an unknown option, an option the verb does not take, a repeated option, a missing `<file>`, an extra argument and an unsupported qualifier are each refused by name, with exit 2 and no connection ([contracts/cli.md, Synopsis](contracts/cli.md#synopsis)).
   - An option may come before or after `<file>`.
   - A verb not yet wired is refused with `khi: <verb> is not implemented yet` and exit 2 (FR-032).
-- [ ] T039 Implement `src/KawasakiVSCode.Cli/ParsedArguments.vb`, `src/KawasakiVSCode.Cli/ArgumentParser.vb` (research R6) and `src/KawasakiVSCode.Cli/KhiApp.vb`; `KhiApp.Run` turns every `KhiRefusal` into its message on stderr and its exit code
-- [ ] T040 Write `tests/KawasakiVSCode.Tests/Route/KhiExeTests.vb`: run the built `khi.exe` from the Cli project's output folder with no arguments; exit code 2 and the usage refusal on stderr (research R12)
-- [ ] T041 Implement `src/KawasakiVSCode.Cli/Program.vb`: `Main` cancels Ctrl+C through `Console.CancelKeyPress` with `e.Cancel = True` (FR-041, research R8), then calls `KhiApp.Run` with the console streams and `Timeouts.Defaults`
-- [ ] T042 Do the fire demonstrations of T009 to T012 and record each in its test file in `tests/KawasakiVSCode.Tests/Conformance/`:
+- [x] T039 Implement `src/KawasakiVSCode.Cli/ParsedArguments.vb`, `src/KawasakiVSCode.Cli/ArgumentParser.vb` (research R6) and `src/KawasakiVSCode.Cli/KhiApp.vb`; `KhiApp.Run` turns every `KhiRefusal` into its message on stderr and its exit code
+- [x] T040 Write `tests/KawasakiVSCode.Tests/Route/KhiExeTests.vb`: run the built `khi.exe` from the Cli project's output folder with no arguments; exit code 2 and the usage refusal on stderr (research R12)
+- [x] T041 Implement `src/KawasakiVSCode.Cli/Program.vb`: `Main` cancels Ctrl+C through `Console.CancelKeyPress` with `e.Cancel = True` (FR-041, research R8), then calls `KhiApp.Run` with the console streams and `Timeouts.Defaults`
+- [x] T042 Do the fire demonstrations of T009 to T012 and record each in its test file in `tests/KawasakiVSCode.Tests/Conformance/`:
   - T009: remove `OptionInfer` `Off` from Core's project file.
   - T010: drop the author line from one file.
   - T011: add a second class to one file.
