@@ -1,6 +1,6 @@
 # Capture (m): SAVE onto a file name that already exists
 
-**Status**: Draft, for the Architect to confirm. Whether KRterm showed a dialog before sending the SAVE line (observation 3) is for the Architect to state.
+**Status**: Confirmed by the Architect, 2026-11-04.
 
 ## What was done
 
@@ -58,7 +58,7 @@ Record 11 is what KRterm sent when the Architect pressed Enter on the SAVE line,
 
 1. **Login**: records 1 to 8 carry the same bytes as capture (a).
 2. **The protocol does not change**: with `capm.as` already in the folder, the exchange is that of capture (f)'s SAVE: `18` (CAN) and the rewritten line `SAVE/P capm.as =capb` (record 11), the `B` block naming `capm.as` and KRterm's `B    0` (records 12, 13), the `D` blocks, the `E` block and `E    0` (records 17, 18), and `File save completed.` (record 19). Nothing on the wire mentions the existing file, a rename or `.bas`.
-3. **A longer pause before the line**: 11 s passed between the typed line's echo (record 10) and KRterm sending it (record 11), where other captures show about 2 s. Whether KRterm asked anything on screen in that time is for the Architect to state.
+3. **No dialog**: 11 s passed between the typed line's echo (record 10) and KRterm sending it (record 11), where other captures show about 2 s. The Architect confirmed KRterm showed no popup, so the pause came before Enter was pressed: KRterm sends the line only on Enter. KRterm did not ask before replacing the existing file.
 4. **KRterm renames on the PC**: the old file became `capm.Bas`, with a capital `B`, its bytes unchanged. The controller had no part in it.
 5. **The same program, the same bytes**: `files/capm.as` is byte-identical to capture (f)'s `capf.as`, a SAVE/P of the same program 50 minutes earlier. SAVE/P of an unchanged program wrote no line that differs between runs.
 6. **Reply times**: the controller answered every client record within 35 ms. Under the plan's rule of three times the longest gap with a 10-second floor, every wait here comes out at 10 s.
