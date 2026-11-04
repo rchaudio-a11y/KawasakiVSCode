@@ -10,7 +10,7 @@ khi is a VB.NET command-line tool that does a Kawasaki terminal's three jobs fro
 
 The work runs in a fixed order. First the real sessions are recorded through a logging relay (KRterm → relay → K-ROSET), and those recordings are checked in. Only then is protocol code written, test-first, against an in-process stand-in that replays the recordings byte for byte over real sockets. KawasakiVSCode.Core holds every behaviour; KawasakiVSCode.Cli (assembly `khi`) parses arguments and wires; KawasakiVSCode.Tests holds the captures, the stand-in and the tests. A tasks template and a README section carry it into a program repository.
 
-Two research findings shape the plan. The capture route is the relay, which the Architect and the agent prove together before taking captures (a) to (k) in the same session ([research R1](research.md#r1-capture-route)). The VB compiler does not enforce XML documentation, so a test does, as constitution 2.0.1 now requires ([research R4](research.md#r4-xml-documentation-enforcement)).
+Two research findings shape the plan. The capture route is the relay, which the Architect and the agent prove together before taking captures (a) to (l) in the same session ([research R1](research.md#r1-capture-route)). The VB compiler does not enforce XML documentation, so a test does, as constitution 2.0.1 now requires ([research R4](research.md#r4-xml-documentation-enforcement)).
 
 ## Technical Context
 
@@ -68,7 +68,7 @@ Checked against constitution v2.0.1 before research, and again after design.
 **Gate G0, protocol code**: No task that sends or awaits controller bytes may start until FR-002, FR-003 and FR-036's captures are checked in with notes. A capture K-ROSET cannot produce leaves its behaviour recorded as not implemented (FR-003).
 
 **Settled by the Architect's rulings of 2026-11-03**:
-- **Capture route (FR-005)**: The relay, proved together. The Architect runs K-ROSET and KRterm, the agent runs the relay and walks [quickstart.md P0](quickstart.md#p0-prove-the-capture-route), and captures (a) to (k) follow in the same session. Gate G0 stands until they are checked in.
+- **Capture route (FR-005)**: The relay, proved together. The Architect runs K-ROSET and KRterm, the agent runs the relay and walks [quickstart.md P0](quickstart.md#p0-prove-the-capture-route), and captures (a) to (l) follow in the same session. Gate G0 stands until they are checked in.
 - **XML documentation**: Constitution 2.0.1 makes the conformance test the rule.
 - **INV-18**: Restated so it is testable. Any reply to DELETE/P that is not a captured reply stops before LOAD, shown by replaying capture (k) with the reply altered ([contracts/capture-format.md](contracts/capture-format.md#the-stand-in)).
 - **Keys at acceptance**: If VS Code's terminal holds back Ctrl+] or the AS control keys, check `terminal.integrated.sendKeybindingsToShell` and report what was needed.

@@ -11,7 +11,12 @@ Phase 0 for [plan.md](plan.md). Each entry gives the decision, why, and what els
 - Checked here: KRterm's `C:\KawasakiRobot\KRterm\KRterm.ini` stores a `TcpPort` per connection (now 23), so KRterm can be pointed at the relay's port.
 - The K-IDE manual (2.5.4) gives K-ROSET's first robot as 127.0.0.1:9105.
 
-**Status**: To be proved together, as the Architect ruled: the Architect runs K-ROSET and KRterm, and the agent runs the relay and walks [quickstart.md P0](quickstart.md#p0-prove-the-capture-route). It passes when a KRterm login through the relay reaches the `>` prompt and the log holds both directions. Captures (a) to (k) follow in the same session. The relay has its own test, `tools/Test-CaptureRelay.ps1`.
+**Status**: Proved on 2026-11-03, together as the Architect ruled: the Architect ran K-ROSET and KRterm, and the agent ran the relay from port 9101 to 127.0.0.1:9105 ([quickstart.md P0](quickstart.md#p0-prove-the-capture-route)).
+- **Through the relay**: KRterm's login reached `This is AS monitor terminal "AUX2"` and the `>` prompt.
+- **The log**: 4 records in each direction, 7 bytes toward the controller and 50 from it.
+- **Direct connection**: The Architect confirmed that KRterm connected straight to 9105 shows the same prompt.
+
+The proof log was not checked in. Captures (a) to (l) follow in the same session. The relay has its own test, `tools/Test-CaptureRelay.ps1`.
 
 **Alternatives considered**: Installing Npcap and capturing on loopback adds a driver to the PC and gives the same bytes. A relay written in VB would need a fourth project and an Article I justification; PowerShell is allowed for dev-time scripts (Article XV).
 
@@ -24,6 +29,7 @@ Phase 0 for [plan.md](plan.md). Each entry gives the decision, why, and what els
 | Telnet options the controller asks for and the replies KRterm gives | (a) connect and login |
 | The login prompt, the `as` exchange, and the prompt after login | (a) |
 | LOAD command form, transfer framing, progress text, completion marker | (b) LOAD of a small program |
+| How a file larger than one transfer block is split, including the last partial block | (l) LOAD of a generated program of about 60 KB |
 | How a rejected step appears, whether a line or step is named, the question text | (c) rejected LOAD |
 | SAVE command form with `/P`, `/FULL` and none; framing; completion marker; the file KRterm wrote | (d) `SAVE/P`, (e) `SAVE/FULL`, (g) bare `SAVE` |
 | A SAVE the controller refuses | (h) |

@@ -11,7 +11,7 @@ How to show the feature works, from the capture route through acceptance in VS C
 
 ## P0 Prove the capture route
 
-FR-005. This is done together, once, before any capture: the Architect runs K-ROSET and KRterm, and the agent runs the relay. Captures (a) to (k) follow in the same session.
+FR-005. This is done together, once, before any capture: the Architect runs K-ROSET and KRterm, and the agent runs the relay. Captures (a) to (l) follow in the same session.
 
 1. **Architect**: Start K-ROSET with its robot. **Agent**: Confirm something is listening on 127.0.0.1:9105, and that `tools\Test-CaptureRelay.ps1` passes.
 2. **Agent**: Start the relay. `<free port>` is any unused local port. The relay serves one KRterm connection and exits when it closes.
@@ -29,7 +29,7 @@ FR-005. This is done together, once, before any capture: the Architect runs K-RO
 
 ## P1 Take the captures
 
-These are FR-002, FR-003 and FR-036's captures (a) to (k), each through the relay, in the same session as P0. The Architect drives KRterm. The agent starts one relay run per capture, writing straight into that capture's folder, and drafts each note for the Architect to confirm.
+These are FR-002, FR-003 and FR-036's captures (a) to (l), each through the relay, in the same session as P0. The Architect drives KRterm. The agent starts one relay run per capture, writing straight into that capture's folder, and drafts each note for the Architect to confirm.
 
 1. **Before the first capture**, check that `.gitattributes` marks `Captures/**` and `Fixtures/**` as `-text`.
 2. **For each capture**, create its folder and `note.md`, laid out as [contracts/capture-format.md](contracts/capture-format.md) shows, and put any file KRterm wrote or read in `files/`.

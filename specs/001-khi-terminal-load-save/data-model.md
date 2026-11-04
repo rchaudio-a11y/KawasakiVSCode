@@ -153,7 +153,7 @@ These live in the test project. The format is in [contracts/capture-format.md](c
 
 | Concept | What it is |
 |---------|------------|
-| Capture | One recorded session: an ID from (a) to (k), an exchange log, a note, and the files KRterm wrote or read |
+| Capture | One recorded session: an ID from (a) to (l), an exchange log, a note, and the files KRterm wrote or read |
 | CaptureRecord | One chunk of bytes: its direction (`C` toward the controller, `S` from it), the time since the start, and the bytes |
 | PayloadRegion | A run of `C` or `S` records that carries file content, marked in the note so the stand-in can compare it with a fixture instead of the captured file |
 | TypedRegion | A run of `C` records that the person typed, marked so a test can supply its own input |
