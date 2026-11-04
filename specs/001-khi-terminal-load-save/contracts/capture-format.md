@@ -11,7 +11,7 @@ tests/KawasakiVSCode.Tests/Captures/<id>-<slug>/
 └── files/           # files KRterm wrote (SAVE) or read (LOAD), byte for byte
 ```
 
-`<id>` is the spec's letter: `a` for connect and login, through `q` for a LOAD of an empty file. An extra capture beside a spec capture keeps its letter and adds to the slug, as `c-load-rejected-ctrl-c` does. The folder carries `-text` in `.gitattributes`, so Git never rewrites line endings in it.
+`<id>` is the spec's letter: `a` for connect and login, through `s` for a LOAD of a file of exactly 1,024 bytes. An extra capture beside a spec capture keeps its letter and adds to the slug, as `c-load-rejected-ctrl-c` does. The folder carries `-text` in `.gitattributes`, so Git never rewrites line endings in it.
 
 ## exchange.txt
 

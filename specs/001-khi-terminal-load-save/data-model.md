@@ -45,7 +45,7 @@ The only commands khi originates (Article III). Each has a fixed text form taken
 | Load | `khi load` | `load <bare name>`, cased as captured |
 | Save | `khi save` | `SAVE[/<qualifier>] <bare name>` |
 
-Every command is sent as the line, then, after its echo, `18`, the line again and `0d 0a`, as each KRterm LOAD and SAVE capture shows (tasks.md D1).
+A LOAD or SAVE is sent as the line, then, after its echo, `18`, the line again and `0d 0a`, as each KRterm LOAD and SAVE capture shows (tasks.md D1). The login is sent as `as` and `0d 0a`, as capture (a) shows.
 
 Typed input in `khi term`, and the person's answer to a question during `khi load`, are not `ControllerCommand`s. They are content passed through unchanged (Article III, v3.0.0).
 
@@ -99,10 +99,11 @@ Any waiting state → TimedOut (exit 3) | ConnectionLost (exit 4)
 Ready → SendingLoad → Streaming → AwaitingCompletion → Done (exit 0)
                                                      ├ controller error → Failed (exit 1)
                                                      └ question → AwaitingAnswer (no time limit)
-Streaming → question with file data left → no more data; what capture (p) shows is sent → AwaitingAnswer
+Streaming → each request → the next block of up to 512 file bytes; after a block shorter than 512, an empty one included, the next request → the end-of-file block (captures (b), (l), (q), (r), (s))
+Streaming → question, with the controller's request for the next block → that request answered as any request is → AwaitingAnswer (captures (c), (n), (o), (p))
 Any wait after an unrecognised line → quiet for its timeout, no `>` prompt → AwaitingAnswer (not TimedOut)
 Any wait after an unrecognised line → the `>` prompt → Failed (a refusal; exit 1)
-AwaitingAnswer → the person's answer sent as typed → AwaitingCompletion
+AwaitingAnswer → the person's answer sent as typed → AwaitingCompletion, or Streaming when the controller asks for more of the file (capture (r))
 AwaitingAnswer → Ctrl+C → discarded; still AwaitingAnswer
 AwaitingAnswer → console closed or input ended → Closed (exit 1; the controller may still be waiting)
 ```
@@ -143,6 +144,7 @@ Every run of `khi load` and `khi save` ends with one result line built from this
 | Robot | the `RobotEntry` name |
 | File | the path as the person gave it |
 | Bytes | file content only, sent or written; never protocol traffic |
+| Size | `khi load`: the file's size; the result line shows it, as `sent <n> of <size> bytes`, only when it differs from Bytes (capture (p)) |
 | Programs | names the controller reported, in its order; empty when it reported none |
 | SaveLines | `khi save` and a typed SAVE: each line outside the file data, with `SaveLineRule`'s verdict on it, normal or unknown |
 | QuestionAnswer | `khi load` only, after a question: the controller's error count, the answer the person typed, the controller's label for that answer as its question printed it, and whether the controller's copy differs from the file (after `0`) |
@@ -154,7 +156,7 @@ These live in the test project. The format is in [contracts/capture-format.md](c
 
 | Concept | What it is |
 |---------|------------|
-| Capture | One recorded session: an ID from (a) to (q), with a suffix for an extra such as `c-load-rejected-ctrl-c`, an exchange log, a note, and the files KRterm wrote or read |
+| Capture | One recorded session: an ID from (a) to (s), with a suffix for an extra such as `c-load-rejected-ctrl-c`, an exchange log, a note, and the files KRterm wrote or read |
 | CaptureRecord | One chunk of bytes: its direction (`C` toward the controller, `S` from it), the time since the start, and the bytes |
 | PayloadRegion | A run of `C` or `S` records that carries file content, marked in the note so the stand-in can compare it with a fixture instead of the captured file |
 | TypedRegion | A run of `C` records that the person typed, marked so a test can supply its own input |

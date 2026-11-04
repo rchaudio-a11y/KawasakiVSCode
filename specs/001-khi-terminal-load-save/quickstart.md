@@ -38,7 +38,9 @@ These are FR-002, FR-003 and FR-036's captures (a) to (q), each through the rela
 5. **For (n) and (o)**, load a file with the syntax error of capture (c), each under its own program name, and answer the question with `0` and Enter, then with `1` and Enter. Never close a session at the question: on K-ROSET that leaves the controller unusable until a restart (`c-load-rejected-reconnect`).
 6. **For (p)**, load a generated file longer than 512 bytes whose syntax error sits in its first block, and answer the question with `1` and Enter. The capture shows what KRterm sends at a question while file data is still to be sent.
 7. **For (q)**, load an empty file. The capture shows what KRterm sends for a file with no bytes.
-8. **A case K-ROSET cannot produce** is recorded in the note as not produced, and its behaviour stays unimplemented (FR-003).
+8. **For (r)**, load a file of (p)'s kind under its own program name, and answer the question with `0` and Enter. The capture shows what the controller asks for after `0` while file data is left.
+9. **For (s)**, load a generated file of exactly 1,024 bytes with no error. The capture shows what KRterm sends after a file's last full block.
+10. **A case K-ROSET cannot produce** is recorded in the note as not produced, and its behaviour stays unimplemented (FR-003).
 
 ## P2 Build and test
 

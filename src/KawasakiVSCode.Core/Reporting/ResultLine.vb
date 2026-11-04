@@ -20,10 +20,15 @@ Namespace Reporting
         ''' <returns>The line, without a line ending.</returns>
         Public Shared Function Format(outcome As TransferOutcome) As String
             Dim programs As String = If(outcome.Programs.Count = 0, "none", String.Join(", ", outcome.Programs))
+            Dim bytes As String = outcome.Bytes.ToString(CultureInfo.InvariantCulture) & " bytes"
+            If outcome.Bytes <> outcome.FileSize Then
+                bytes = "sent " & outcome.Bytes.ToString(CultureInfo.InvariantCulture) & " of " &
+                        outcome.FileSize.ToString(CultureInfo.InvariantCulture) & " bytes"
+            End If
             Dim line As String = "khi " & outcome.Verb & " " & If(outcome.Succeeded, "ok", "failed") &
                                  ": robot " & outcome.Robot &
                                  ", file """ & outcome.FilePath & """, " &
-                                 outcome.Bytes.ToString(CultureInfo.InvariantCulture) & " bytes, programs " & programs
+                                 bytes & ", programs " & programs
             Dim question As QuestionAnswer = outcome.Question
             If question IsNot Nothing Then
                 line &= "; completed with " & question.ErrorCount.ToString(CultureInfo.InvariantCulture) &

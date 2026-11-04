@@ -38,8 +38,10 @@ The proof log was not checked in. Captures (a) to (q) follow in the same session
 | DELETE/P present, absent, refused, and any confirmation | (k), KRterm; kept, though no 001 behaviour relies on it since `--replace` was dropped |
 | A SAVE onto a file name that already exists: whether the old file's rename to `.bas` travels in the protocol | (m) |
 | What the controller sends after the LOAD question is answered with `0`, and with `1` | (n), (o). `c-load-rejected-ctrl-c` is kept as a record only: khi never relays Ctrl+C |
-| What KRterm sends at a question while file data is still to be sent | (p) |
-| What KRterm sends for an empty file | (q) |
+| What KRterm sends at a question while file data is still to be sent | (p): the question comes with the controller's request for the next block, and KRterm answers it with the file's next data block, as it answers any request; in (c), (n) and (o), with no data left, that answer was the end-of-file block. After `1`, the controller ended with `E` and asked for no more of the file |
+| What KRterm sends for an empty file | (q): a data block holding no bytes at the first request, then the end-of-file block at the next |
+| What the controller asks for after `0` with file data left | (r) |
+| What KRterm sends after a file's last full block | (s), a file of exactly 1,024 bytes: a data block holding no bytes, then the end-of-file block at the next request. A block shorter than 512 bytes, an empty one included, ends a file, as (b), (l), (q) and (r) also show |
 | Whether telnet doubles a 0xFF byte inside file content | (b) and (d), if any file holds one; AS files are expected to be ASCII |
 
 **Rationale**: Article IV. A behaviour no capture shows is recorded as not implemented and reported to the Architect.
@@ -118,7 +120,7 @@ Constitution 2.0.1 makes this test the rule.
 - **A question during `khi load`**: The wait for the person's answer has no timeout (Article X, v3.0.0). The waits before the question and after the answer keep theirs.
 - **Tests**: `Timeouts` is a parameter of `KhiApp.Run`; `Main` passes the defaults and tests pass short values. There is no person-facing timeout option.
 
-**The table** (T017, measured 2026-11-04 over captures (a) to (o) and the three extras; (p) and (q) are measured when they are checked in). A gap is the time from the record before to the controller's record. Three times the longest gap, 348 ms, is far under the floor, so every step is 10 seconds.
+**The table** (T017, measured 2026-11-04 over captures (a) to (o) and the three extras, then again with (p), (q) and (r), which change no row; (s) is measured when it is checked in). A gap is the time from the record before to the controller's record. Three times the longest gap, 348 ms, is far under the floor, so every step is 10 seconds.
 
 | WaitStep | Value | Longest gap seen | Where |
 |----------|-------|------------------|-------|
@@ -177,12 +179,12 @@ Constitution 2.0.1 makes this test the rule.
 |------|--------------|
 | Which robot (Article IX) | `RobotSelection.Resolve` |
 | Supported qualifiers | `SaveQualifier.Parse` |
-| What khi may send as a command (Article III) | `ControllerCommand`; `ControllerConnection.Send` takes only a `ControllerCommand`, framing bytes from `TransferFraming`, or pass-through content |
+| What khi may send as a command (Article III) | `ControllerCommand`; `ControllerConnection.Send` takes only a `ControllerCommand`. Otherwise bytes leave khi only as the one telnet offer `ControllerConnection.Negotiate` sends (capture (a)), framing bytes from `TransferFraming`, or pass-through content |
 | Whether a line outside the file data is normal during a SAVE (FR-040) | `SaveLineRule` |
 | Whether a line during a LOAD is normal, an error, a question or a refusal ending at the prompt (FR-018, FR-021) | `LoadLineRule` |
 | The framing bytes khi reads and builds | `TransferFraming` |
 | What of the person's input reaches the controller, Ctrl+C dropped and Ctrl+] ending the session (FR-014, FR-041) | `PersonInput` |
-| Every wait has a timeout (Article X) | `ControllerConnection.ReadUntil(step, ...)`; only `TerminalRelay` after login, and the wait for the person's answer to a load question, read without a limit |
+| Every wait has a timeout (Article X) | `ControllerConnection.ReadUntil(step, ...)`; only `TerminalRelay` after login, and the wait for the person's answer to a question during `khi load` or a typed transfer, read without a limit |
 | Replacing a saved file (Article VI) | `SaveTarget` |
 
 **Rationale**: Article XII. Once code exists, claims such as "only `TerminalRelay` calls the unbounded read" are proved in review with CodeMem `references`, not text search.
