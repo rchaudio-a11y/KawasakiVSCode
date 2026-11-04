@@ -11,7 +11,7 @@ tests/KawasakiVSCode.Tests/Captures/<id>-<slug>/
 └── files/           # files KRterm wrote (SAVE) or read (LOAD), byte for byte
 ```
 
-`<id>` is the spec's letter: `a` for connect and login, through `o` for the LOAD question answered with `1`. An extra capture beside a spec capture keeps its letter and adds to the slug, as `c-load-rejected-ctrl-c` does. The folder carries `-text` in `.gitattributes`, so Git never rewrites line endings in it.
+`<id>` is the spec's letter: `a` for connect and login, through `q` for a LOAD of an empty file. An extra capture beside a spec capture keeps its letter and adds to the slug, as `c-load-rejected-ctrl-c` does. The folder carries `-text` in `.gitattributes`, so Git never rewrites line endings in it.
 
 ## exchange.txt
 
@@ -53,7 +53,8 @@ Required headings and content:
 
 - **Replay**: For each `S` record it sends exactly the captured bytes, once the client has sent everything the capture shows before it.
 - **Checking the client**: Client bytes outside the payload and typed regions must equal the captured `C` bytes. A difference fails the test and shows both sides.
-- **Payload regions**: Compared with the fixture the test names (INV-1). For a SAVE, the test checks the written file against the capture's file in `files/`.
+- **Payload regions**: Compared with the fixture the test names (INV-1). A region starts where the note says and ends at its block's closing `17`, so a fixture of another length than the captured file still fits; the fixture gives the expected content. For a SAVE, the test checks the written file against the capture's file in `files/`.
+- **After the end**: Client bytes after the capture's last record, or after a stop, are recorded and not compared.
 - **Typed regions**: Taken from the test's own input.
 - **Recording**: Every client line outside payload regions is recorded as a command, so the suite can compare the union against the allowed set (INV-2).
 - **Faults**: The stand-in can stop at a given record, either by going silent (INV-5, INV-6, INV-10) or by closing the connection (INV-4). These faults only cut a capture short.

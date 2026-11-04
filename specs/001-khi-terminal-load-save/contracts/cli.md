@@ -16,7 +16,7 @@ khi save <file> [--qualifier <q>] [--robot <name>]
 
   ```text
   khi: <file> does not exist                                  (khi load, FR-019)
-  khi: <file> holds byte ff at offset <n>; it cannot be sent  (khi load, FR-042; <n> counts from 0)
+  khi: <file> holds byte <ff|17> at offset <n>; it cannot be sent  (khi load, FR-042; <n> counts from 0)
   khi: <file> has no extension; name the file with one        (khi save, FR-043)
   ```
 - **Unwired verbs and options**: any not yet built is refused with `khi: <verb or option> is not implemented yet`.
@@ -31,7 +31,7 @@ khi save <file> [--qualifier <q>] [--robot <name>]
 
 ## A question during a LOAD (`khi load`)
 
-The controller's question is printed verbatim on stdout. A question is a line `(<digit>:<label>, <digit>:<label>)`; any other unrecognised line followed by the controller going quiet for that wait's timeout is treated the same way. A question that comes while file data is still to be sent stops the file data: khi sends the end-of-file block instead of the next block (FR-021). khi then reads the person's answer from the console with no time limit, and sends it as typed, Enter included; a Ctrl+C that reaches khi there is discarded. khi never answers on its own (FR-021). Whichever answer is given, the load exits 1, and the result line names the answer (below). If the console closes or its input ends first, khi closes the session, exits 1, and says on stderr:
+The controller's question is printed verbatim on stdout. A question is a line `(<digit>:<label>, <digit>:<label>)`; any other unrecognised line followed by the controller going quiet for that wait's timeout, with no `>` prompt, is treated the same way. A line followed by the `>` prompt is a refusal: the load fails, exit 1. A question that comes while file data is still to be sent stops the file data: in place of the next block, khi sends what capture (p) shows (FR-021). khi then reads the person's answer from the console with no time limit, and sends it as typed, Enter included; a Ctrl+C that reaches khi there is discarded. khi never answers on its own (FR-021). Whichever answer is given, the load exits 1, and the result line names the answer (below). If the console closes or its input ends first, khi closes the session, exits 1, and says on stderr:
 
 ```text
 khi: no answer to the controller's question; robot <name> may still be waiting on it and may need a restart

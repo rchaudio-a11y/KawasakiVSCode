@@ -1,6 +1,6 @@
 # Implementation Plan: khi — terminal, LOAD and SAVE from VS Code
 
-**Branch**: `001-khi-terminal-load-save` | **Date**: 2026-11-03 | **Spec**: [spec.md](spec.md)
+**Branch**: `001-khi-terminal-load-save` | **Date**: 2026-11-03, revised 2026-11-04 | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/001-khi-terminal-load-save/spec.md`, governed by constitution v3.0.0 (amended 2026-11-04 from v2.0.1).
 
@@ -10,7 +10,7 @@ khi is a VB.NET command-line tool that does a Kawasaki terminal's three jobs fro
 
 The work runs in a fixed order. First the real sessions are recorded through a logging relay (KRterm → relay → K-ROSET), and those recordings are checked in. Only then is protocol code written, test-first, against an in-process stand-in that replays the recordings byte for byte over real sockets. KawasakiVSCode.Core holds every behaviour; KawasakiVSCode.Cli (assembly `khi`) parses arguments and wires; KawasakiVSCode.Tests holds the captures, the stand-in and the tests. A tasks template and a README section carry it into a program repository.
 
-Two research findings shape the plan. The capture route is the relay, which the Architect and the agent prove together before taking captures (a) to (o) in the same session ([research R1](research.md#r1-capture-route)). The VB compiler does not enforce XML documentation, so a test does, as constitution 2.0.1 now requires ([research R4](research.md#r4-xml-documentation-enforcement)).
+Two research findings shape the plan. The capture route is the relay, which the Architect and the agent prove together before taking captures (a) to (q) in the same session ([research R1](research.md#r1-capture-route)). The VB compiler does not enforce XML documentation, so a test does, as constitution 2.0.1 now requires ([research R4](research.md#r4-xml-documentation-enforcement)).
 
 ## Technical Context
 
@@ -45,7 +45,7 @@ Checked against constitution v2.0.1 before research, and again after design. Rec
 | I Library-First | Three projects, no others. Verbs in Cli only parse and wire; behaviour sits in Core. One type per `.vb` file, checked by a conformance test. | Pass |
 | II Files Are Opaque | Load streams the file unchanged (INV-1). Nothing reads a file's content; `--replace`, the one exception the article allows, is dropped from this feature (ruling of 2026-11-04). | Pass |
 | III The Person Commands the Robot | `ControllerCommand` is the one door for every command khi originates: login, LOAD, and SAVE with its qualifier. The stand-in records every command, and the suite compares them to the allowed set (INV-2). At a question during `khi load`, only the answer the person types is sent, and nothing until they type (INV-11, the v3.0.0 review gate). | Pass |
-| IV Recorded Protocol Only | No protocol code before the captures are checked in (gate G0). Every protocol test names its capture (INV-3). | Pass, blocked on captures |
+| IV Recorded Protocol Only | No protocol code before the captures are checked in (gate G0). Every protocol test names its capture (INV-3). | Pass; G0 waits on captures (p) and (q) |
 | V Integration Against Captures | The stand-in is a real `TcpListener` replaying captures. There are no socket or stream mocks. Acceptance runs against K-ROSET. | Pass |
 | VI A Save Never Damages | `SaveTarget` writes a temporary file beside the target and replaces the target only after completion, and a line outside the file data that no capture shows as normal fails the save (INV-4, INV-10, INV-19). | Pass |
 | VII Test-First | Every task runs test, Red, report Red, implement, Green. Every guard records its fire demonstration in its test file. | Pass |
@@ -53,7 +53,7 @@ Checked against constitution v2.0.1 before research, and again after design. Rec
 | IX Controllers Are Configuration | `khi.robots.json` is read through `RobotSelection`, the one door. The login name `as` is one constant in Core citing manual 2.6.1. The relay script takes its ports as required parameters with no defaults. | Pass |
 | X Bounded Waits | Every read goes through `ControllerConnection` with a named `WaitStep` and a timeout. Only `TerminalRelay` after login, and the wait for the person's answer to a question during `khi load`, are unbounded, as v3.0.0 allows (INV-5, INV-6, INV-10, INV-11). | Pass |
 | XI Anti-Abstraction | No interfaces planned and no DI container; `Timeouts` is passed as a plain parameter. An abstraction needs three call sites in hand. | Pass |
-| XII One Door for Every Rule | The doors are `RobotSelection`, `SaveQualifier`, `ControllerCommand`, `SaveLineRule` and `ControllerConnection` waits. See [research R15](research.md#r15-one-door-per-rule). | Pass |
+| XII One Door for Every Rule | The doors are `RobotSelection`, `SaveQualifier`, `ControllerCommand`, `TransferFraming`, `LoadLineRule`, `SaveLineRule`, `SaveTarget`, `PersonInput` and `ControllerConnection` waits. See [research R15](research.md#r15-one-door-per-rule). | Pass |
 | XIII Production-Route Reachability | Every refusal and error has a test through `KhiApp.Run`; exit-code checks also run through `khi.exe`. | Pass |
 | XIV Archive, Never Delete | Nothing to retire yet. | Pass |
 | XV Compiled .NET | VB.NET on .NET 10. PowerShell only for the dev-time capture relay. The MSTest packages are justified below. | Pass, justified |
@@ -68,7 +68,7 @@ Checked against constitution v2.0.1 before research, and again after design. Rec
 **Gate G0, protocol code**: No task that sends or awaits controller bytes may start until FR-002, FR-003 and FR-036's captures are checked in with notes. A capture K-ROSET cannot produce leaves its behaviour recorded as not implemented (FR-003).
 
 **Settled by the Architect's rulings of 2026-11-03**:
-- **Capture route (FR-005)**: The relay, proved together. The Architect runs K-ROSET and KRterm, the agent runs the relay and walks [quickstart.md P0](quickstart.md#p0-prove-the-capture-route), and captures (a) to (o) follow in the same session. Gate G0 stands until they are checked in.
+- **Capture route (FR-005)**: The relay, proved together. The Architect runs K-ROSET and KRterm, the agent runs the relay and walks [quickstart.md P0](quickstart.md#p0-prove-the-capture-route), and captures (a) to (q) follow in the same session. Gate G0 stands until they are checked in.
 - **XML documentation**: Constitution 2.0.1 makes the conformance test the rule.
 - **INV-18**: Restated so it is testable. *Removed on 2026-11-04 with `--replace`.*
 - **Keys at acceptance**: If VS Code's terminal holds back Ctrl+] or the AS control keys, check `terminal.integrated.sendKeybindingsToShell` and report what was needed.
@@ -76,8 +76,14 @@ Checked against constitution v2.0.1 before research, and again after design. Rec
 **Settled by the Architect's rulings of 2026-11-04**, on the captures:
 - **`--replace` is dropped**: on K-ROSET a plain LOAD replaces a program already in memory. The constitution is unchanged; the difference from the manuals is on the spec's live-controller check.
 - **A SAVE with an unknown line fails** (FR-040, INV-19): `SaveLineRule` is the one door that decides whether a line outside the file data is a captured normal line ([research R17](research.md#r17-normal-lines-during-a-save)).
-- **Capture (m)**, a SAVE onto an existing file name, is added before gate G0 lifts.
-- **A question during `khi load`** is handed to the person (FR-021, INV-11): khi prints it, waits without limit, and sends the one answer typed. Constitution v3.0.0 amends Articles III, IV and X for it. Captures (n) and (o), the question answered with `0` and with `1`, are added before gate G0 lifts.
+- **Capture (m)**, a SAVE onto an existing file name: taken and checked in.
+- **A question during `khi load`** is handed to the person (FR-021, INV-11): khi prints it, waits without limit, and sends the one answer typed. Constitution v3.0.0 amends Articles III, IV and X for it. Captures (n) and (o), the question answered with `0` and with `1`: taken and checked in.
+
+**Settled by the Architect's rulings on the analysis, 2026-11-04**:
+- **Captures (p) and (q)**, a LOAD longer than 512 bytes with an error in its first block, and a LOAD of an empty file, are added; Article IV stays as written. Gate G0 waits on them again, so Phase 2's protocol tasks, the connection, the login and the command bytes, start only once they are checked in.
+- **A line followed by the `>` prompt** is a refusal and fails the load; only quiet with no prompt goes to the person (FR-021).
+- **A question during a typed transfer** waits without limit, once the Article X amendment drafted as 3.1.0 is approved.
+- **A `17` byte** in a file to load is refused like `ff` (FR-042).
 - **Keys**: khi does not emulate KRterm's shortcuts; copy and paste are VS Code's, and Ctrl+C is copy. khi never relays Ctrl+C: when VS Code passes it through, khi discards it in every verb, and it is not a quit (FR-014, FR-041, INV-14). Ctrl+] ends the session. Capture `c-load-rejected-ctrl-c` is kept as a record only.
 
 **Re-check after design**: The design in [data-model.md](data-model.md) and [contracts/](contracts/) adds no project, interface, package or wait beyond those above. Every guard in the invariants has a named test and fire demonstration in [contracts/test-guards.md](contracts/test-guards.md). Pass.
@@ -119,17 +125,17 @@ src/
 │   ├── KawasakiVSCode.Core.vbproj
 │   ├── Robots/                     # RobotEntry, RobotsFile, RobotSelection
 │   ├── Connection/                 # ControllerConnection, TelnetNegotiator, Timeouts, WaitStep
-│   ├── Session/                    # LoginSequence, LoginName, SessionState
+│   ├── Session/                    # LoginSequence, LoginName
 │   ├── Commands/                   # ControllerCommand, SaveQualifier
-│   ├── Transfer/                   # LoadOperation, SaveOperation, TransferFraming, SaveTarget,
-│   │                               # SaveLineRule
-│   ├── Terminal/                   # TerminalSession, TerminalRelay, TypedTransfer
-│   └── Reporting/                  # ControllerReply, ResultLine, ExitCode, OutcomeWriter
+│   ├── Transfer/                   # LoadOperation, SaveOperation, TransferFrame, TransferFraming,
+│   │                               # LoadLineRule, SaveLineRule, SaveTarget
+│   ├── Terminal/                   # TerminalSession, TerminalRelay, TypedTransfer, PersonInput
+│   └── Reporting/                  # ExitCode, KhiRefusal, TransferOutcome, QuestionAnswer, ResultLine
 ├── KawasakiVSCode.Cli/
 │   ├── KawasakiVSCode.Cli.vbproj   # AssemblyName khi
 │   ├── Program.vb                  # Main calls KhiApp.Run
 │   ├── KhiApp.vb                   # parse, dispatch, exit code
-│   ├── ArgumentParser.vb
+│   ├── ArgumentParser.vb, ParsedArguments.vb
 │   ├── TermVerb.vb, LoadVerb.vb, SaveVerb.vb
 │   └── ConsoleKeySource.vb         # raw keys to bytes; Ctrl+] ends the session
 tests/
@@ -137,10 +143,11 @@ tests/
     ├── KawasakiVSCode.Tests.vbproj
     ├── Captures/<id>/              # exchange.txt, note.md, files/
     ├── Fixtures/
-    ├── StandIn/                    # ControllerStandIn, CaptureReader, CommandRecorder
+    ├── StandIn/                    # ControllerStandIn, CaptureReader, CaptureRecord, CommandRecorder, CaptureAttribute
+    ├── Conformance/                # options, header blocks, XML docs, one type per file, capture inventory, no addresses
+    ├── Connection/, Commands/, Robots/, Reporting/, Transfer/, Cli/   # unit tests by Core and Cli folder
     ├── Protocol/                   # the protocol invariants over real sockets
-    ├── Route/                      # through KhiApp.Run and khi.exe
-    └── Conformance/                # options, header blocks, XML docs, one type per file
+    └── Route/                      # through KhiApp.Run and khi.exe
 ```
 
 **Structure Decision**: These are the three projects of Article I; the folders inside them group files and add no projects. The type names above are a starting map, and the tests decide what actually exists (Article XI). The capture relay is a PowerShell script, not a fourth project, so Article I needs no justification for it.

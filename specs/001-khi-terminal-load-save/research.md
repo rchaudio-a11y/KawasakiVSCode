@@ -16,7 +16,7 @@ Phase 0 for [plan.md](plan.md). Each entry gives the decision, why, and what els
 - **The log**: 4 records in each direction, 7 bytes toward the controller and 50 from it.
 - **Direct connection**: The Architect confirmed that KRterm connected straight to 9105 shows the same prompt.
 
-The proof log was not checked in. Captures (a) to (o) follow in the same session. The relay has its own test, `tools/Test-CaptureRelay.ps1`.
+The proof log was not checked in. Captures (a) to (q) follow in the same session. The relay has its own test, `tools/Test-CaptureRelay.ps1`.
 
 **Alternatives considered**: Installing Npcap and capturing on loopback adds a driver to the PC and gives the same bytes. A relay written in VB would need a fourth project and an Article I justification; PowerShell is allowed for dev-time scripts (Article XV).
 
@@ -38,6 +38,8 @@ The proof log was not checked in. Captures (a) to (o) follow in the same session
 | DELETE/P present, absent, refused, and any confirmation | (k), KRterm; kept, though no 001 behaviour relies on it since `--replace` was dropped |
 | A SAVE onto a file name that already exists: whether the old file's rename to `.bas` travels in the protocol | (m) |
 | What the controller sends after the LOAD question is answered with `0`, and with `1` | (n), (o). `c-load-rejected-ctrl-c` is kept as a record only: khi never relays Ctrl+C |
+| What KRterm sends at a question while file data is still to be sent | (p) |
+| What KRterm sends for an empty file | (q) |
 | Whether telnet doubles a 0xFF byte inside file content | (b) and (d), if any file holds one; AS files are expected to be ASCII |
 
 **Rationale**: Article IV. A behaviour no capture shows is recorded as not implemented and reported to the Architect.
@@ -162,7 +164,10 @@ Constitution 2.0.1 makes this test the rule.
 | Supported qualifiers | `SaveQualifier.Parse` |
 | What khi may send as a command (Article III) | `ControllerCommand`; `ControllerConnection.Send` takes only a `ControllerCommand`, framing bytes from `TransferFraming`, or pass-through content |
 | Whether a line outside the file data is normal during a SAVE (FR-040) | `SaveLineRule` |
-| Every wait has a timeout (Article X) | `ControllerConnection.ReadUntil(step, ...)`; only `TerminalRelay` reads without a limit, and only after login |
+| Whether a line during a LOAD is normal, an error, a question or a refusal ending at the prompt (FR-018, FR-021) | `LoadLineRule` |
+| The framing bytes khi reads and builds | `TransferFraming` |
+| What of the person's input reaches the controller, Ctrl+C dropped and Ctrl+] ending the session (FR-014, FR-041) | `PersonInput` |
+| Every wait has a timeout (Article X) | `ControllerConnection.ReadUntil(step, ...)`; only `TerminalRelay` after login, and the wait for the person's answer to a load question, read without a limit |
 | Replacing a saved file (Article VI) | `SaveTarget` |
 
 **Rationale**: Article XII. Once code exists, claims such as "only `TerminalRelay` calls the unbounded read" are proved in review with CodeMem `references`, not text search.

@@ -17,7 +17,7 @@ The workspace's controllers. khi reads this file from the current folder only; a
 | Key | Required | Rule |
 |-----|----------|------|
 | `robots` | yes | A list with at least one entry |
-| `robots[].name` | yes | Non-empty; unique ignoring case |
+| `robots[].name` | yes | Non-empty; unique ignoring case. `--robot` and `default` match a name ignoring case too |
 | `robots[].address` | yes | A host name or IP address |
 | `robots[].port` | yes | A whole number from 1 to 65535 |
 | `robots[].simulator` | yes | `true` or `false`; no behaviour depends on it in this feature |
