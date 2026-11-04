@@ -97,7 +97,8 @@ Any waiting state → TimedOut (exit 3) | ConnectionLost (exit 4)
 Ready → SendingLoad → Streaming → AwaitingCompletion → Done (exit 0)
                                                      ├ controller error → Failed (exit 1)
                                                      └ question → AwaitingAnswer (no time limit)
-AwaitingAnswer → the person's answer sent as typed, Ctrl+C included → AwaitingCompletion
+AwaitingAnswer → the person's answer sent as typed → AwaitingCompletion
+AwaitingAnswer → Ctrl+C → discarded; still AwaitingAnswer
 AwaitingAnswer → console closed or input ended → Closed (exit 1; the controller may still be waiting)
 ```
 

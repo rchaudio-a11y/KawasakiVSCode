@@ -24,7 +24,7 @@
 - Q: How does a person reload an edited program the controller already holds? → A: With `khi load --replace`, in this feature. The person chooses it; khi reads the program names from the file's `.PROGRAM` header lines (Article II, v2.0.0) and replaces those programs with DELETE/P for each name, then LOAD (Article III, v2.0.0). Without `--replace`, a name already in memory fails with the controller's words. *Superseded on 2026-11-04: `--replace` is dropped from this feature.*
 - Q: What does `khi load` do when a rejected LOAD stops at a question? → A: It prints the question, answers nothing, closes the session and exits non-zero. The capture note records what stays in memory. *Superseded on 2026-11-04: the question is handed to the person (constitution v3.0.0).*
 - Q: What does the output carry when the controller names no line? → A: The output names the file and the problem matcher points at the file. No line is ever invented or translated from a step number. The plan brings the capture.
-- Q: Who gets Ctrl+C in `khi term`? → A: The controller; khi relays it, and it cancels the input line at the AS prompt. The session ends on Ctrl+], or when the console closes or its input ends.
+- Q: Who gets Ctrl+C in `khi term`? → A: The controller; khi relays it, and it cancels the input line at the AS prompt. The session ends on Ctrl+], or when the console closes or its input ends. *Superseded on 2026-11-04: khi never relays Ctrl+C (Session 2026-11-04).*
 
 ### Session 2026-11-03
 
@@ -36,11 +36,11 @@
 The Architect's rulings on the captures.
 
 - Q: Does this feature keep `khi load --replace`? → A: No. On K-ROSET a plain LOAD replaces a program already in memory, without a word (captures (i) and `i-load-existing-changed`), so `--replace` is dropped from this feature. The constitution stays as it is. The difference from both AS manuals, which say LOAD refuses such a name, goes on the live-controller check (Assumptions).
-- Q: What does `khi load` do when the controller asks a question during the load? → A: The question is handed to the person: khi prints it, sends the one answer the person types, and reads on. khi never answers it itself. Constitution v3.0.0 (2026-11-04) amends Article III for this, and Article X leaves the wait for the answer without limit. Ctrl+C typed at the question is passed through like any answer. Captures (n) and (o) record the question answered with `0` and with `1`.
+- Q: What does `khi load` do when the controller asks a question during the load? → A: The question is handed to the person: khi prints it, sends the one answer the person types, and reads on. khi never answers it itself. Constitution v3.0.0 (2026-11-04) amends Article III for this, and Article X leaves the wait for the answer without limit. The question is answered by typing the answer; Ctrl+C is not an answer (the last ruling below). Captures (n) and (o) record the question answered with `0` and with `1`.
 - Q: How does khi tell a failed SAVE from a good one? → A: A SAVE fails if the controller prints any line that is neither file data nor a captured normal line (research R17). Those lines are reported verbatim. SAVE's completion line carries no error count (capture (h)), so these lines are the only sign.
 - Q: Is a SAVE onto a file name that already exists captured? → A: Yes, as capture (m).
 - Q: Are the large capture logs, 1.58 MB for (e) and 1.32 MB for (g), kept as they are? → A: Yes.
-- Q: Does khi emulate KRterm's keyboard shortcuts? → A: No. khi does not emulate KRterm's shortcuts (Alt+V paste and the like); copy and paste are VS Code's. Ctrl+C that reaches khi is relayed to the controller; Ctrl+] ends the session.
+- Q: Does khi emulate KRterm's keyboard shortcuts, and what happens to Ctrl+C? → A: khi does not emulate KRterm's shortcuts (Alt+V paste and the like); copy and paste are VS Code's. Ctrl+C is copy and ends at the terminal: khi never relays Ctrl+C to the controller, not at the prompt, not at a load question, not during a transfer. When VS Code passes the keystroke through because nothing is selected, khi discards it; it is not relayed and it is not a quit. Ctrl+] ends the session, and a load question is answered by typing the answer. This reverses the earlier relaying of Ctrl+C in FR-014 and at the load question. Capture `c-load-rejected-ctrl-c` is kept as a record only.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -72,7 +72,7 @@ A robot programmer runs `khi load` on a program file and sees, in the controller
 
 1. **Given** a program whose name the controller does not hold, **When** the programmer runs `khi load <file>`, **Then** the file's bytes reach the controller unchanged, the controller's reply prints verbatim, one result line ends the output, and the exit code is zero.
 2. **Given** a program the controller rejects, **When** the programmer runs `khi load <file>`, **Then** the controller's text prints exactly, the output carries `<file>:<line>:` where the controller names a line and `<file>:` where it names none, and the exit code is non-zero.
-3. **Given** the controller stops to ask a question during the load, **When** that question arrives, **Then** khi prints it verbatim, waits without limit, sends the one answer the person types (Ctrl+C included) and nothing of its own, and reads on; the exit code follows the controller's result (FR-017).
+3. **Given** the controller stops to ask a question during the load, **When** that question arrives, **Then** khi prints it verbatim, waits without limit, sends the one answer the person types and nothing of its own, and reads on; a Ctrl+C that reaches khi meanwhile is discarded; the exit code follows the controller's result (FR-017).
 4. **Given** an edited program whose name is already in the controller's memory and not in use, **When** the programmer runs `khi load <file>`, **Then** the controller replaces the program with the file's version, its reply prints verbatim, one result line ends the output, and the exit code is zero, as captures (i) and `i-load-existing-changed` show K-ROSET doing.
 5. **Given** a program whose name is in use on the controller, **When** the programmer runs `khi load <file>`, **Then** the controller's refusal prints verbatim, and the exit code is non-zero because the controller reports an error count above zero, as capture (f) shows.
 6. **Given** a file that does not exist, **When** the programmer runs `khi load <file>`, **Then** khi refuses by naming the file and does not connect.
@@ -117,7 +117,7 @@ A robot programmer opens `khi term` and works at the AS prompt as they would in 
 7. **Given** an open session, **When** the controller reports an error, **Then** the text reaches the screen unaltered, the session continues, and it does not count as a failure of the tool.
 8. **Given** a controller that goes silent before login completes, **When** the wait times out, **Then** khi names the step it was waiting on, closes the session, and exits non-zero.
 9. **Given** a typed LOAD the controller interrupts with a question, **When** the person types an answer, **Then** the answer reaches the controller unchanged and the transfer continues.
-10. **Given** an open session, **When** the person presses Ctrl+C, **Then** it reaches the controller unchanged and the session stays open.
+10. **Given** an open session with nothing selected, **When** the person presses Ctrl+C and VS Code passes it through, **Then** khi discards it: nothing reaches the controller, the session stays open, and it is not a quit.
 
 ---
 
@@ -166,10 +166,10 @@ A robot programmer copies the tasks template into a program repository and uses 
 - **The controller names no line**: Neither manual shows a line number for a rejected step. Where the controller names none, the output carries `<file>: <controller text>`, the problem matcher points at the file, and no line is invented. The plan brings the capture.
 - **The line named is not a file line**: If the controller names a step within a program rather than a line of the file, khi treats it as naming no line. The controller's text keeps its step number verbatim, and it is never translated into a line (Article II).
 - **A LOAD interrupted partway**: The manuals warn that original data is deleted if LOAD is canceled while overwriting. Article VI protects only the PC side, so after any failed or interrupted load khi says the load did not finish and that the controller's memory may have changed.
-- **Ctrl+C during `khi load` or `khi save`**: Treated as a failure, except at a load question, where it is the person's answer and is passed through (FR-021). The result line says what was transferred, a save's target is byte-identical to before with no temporary file left, and the exit code is non-zero.
-- **Ctrl+C during a transfer typed in `khi term`**: It is relayed like any other key, and what follows is the controller's to decide. khi's wait for the controller stays bounded. The manuals' warning about a canceled LOAD applies.
+- **Ctrl+C during `khi load` or `khi save`**: Discarded (FR-041). It is not sent and it is not a quit: the transfer goes on, and at a load question khi keeps waiting for the typed answer. A person who wants to stop a transfer ends the task, which is the process being killed outright (below).
+- **Ctrl+C during a transfer typed in `khi term`**: Discarded like any Ctrl+C (FR-014); the transfer goes on.
 - **Ctrl+] during a transfer typed in `khi term`**: The session ends and khi exits zero, because the person ended it. A typed SAVE's target stays byte-identical to before with no temporary file left; a typed LOAD carries the warning above.
-- **Ctrl+C at the prompt**: khi relays it, so AS's own Ctrl+C (cancel the input line, leave a `^C:Exit` dialog) works in `khi term`, and the session stays open.
+- **Ctrl+C at the prompt**: Ctrl+C is VS Code's copy. With nothing selected, VS Code passes it through and khi discards it; the session stays open. AS's own uses of Ctrl+C, cancelling the input line and the `CTRL+C:Exit` choice some AS prompts offer, are not available from `khi term`; the person uses another choice the prompt offers.
 - **A question during a typed transfer**: Keystrokes keep being relayed so the person can answer. The wait stays bounded (Article X), so the plan sizes the transfer timeout with this in mind.
 - **A typed transfer stalls**: The wait times out, khi names the step, closes the session, and exits non-zero. The session does not return to the prompt, because Article X leaves it closed.
 - **A typed LOAD names a missing file**: khi answers the controller as the capture shows KRterm doing, then hands the prompt back.
@@ -210,7 +210,7 @@ A robot programmer copies the tasks template into a program repository and uses 
 - **FR-011**: In `khi term` the controller's output MUST reach the screen unaltered. An error the controller reports there is the person's to read; it MUST NOT end the session or count as a failure of the tool.
 - **FR-012**: When the controller begins a SAVE or LOAD the person typed, khi MUST play the PC end against files relative to the current folder, then hand the prompt back. khi MUST recognise this from the controller's recorded transfer framing, not by reading what the person typed.
 - **FR-013**: A typed SAVE MUST follow the same temporary-file and replacement rule as `khi save`. A typed LOAD MUST send the file's bytes unchanged. Keystrokes MUST keep being relayed during a typed transfer.
-- **FR-014**: After login, `khi term` MUST wait on the person without limit. Ctrl+C MUST be relayed to the controller like any other key. Ctrl+], the console closing, or its input ending MUST close the socket and exit zero; Ctrl+] itself MUST NOT reach the controller. A controller-side close MUST be reported and exit non-zero.
+- **FR-014**: After login, `khi term` MUST wait on the person without limit. Ctrl+C MUST NOT reach the controller: when VS Code passes it through because nothing is selected, khi MUST discard it, and it MUST NOT end the session. Ctrl+], the console closing, or its input ending MUST close the socket and exit zero; Ctrl+] itself MUST NOT reach the controller. A controller-side close MUST be reported and exit non-zero.
 - **FR-015**: Every wait during connect, login and a typed transfer MUST have a timeout. A timeout MUST name the step that was waiting, leave the session closed, and exit non-zero.
 
 **Load**
@@ -220,7 +220,7 @@ A robot programmer copies the tasks template into a program repository and uses 
 - **FR-018**: Where the controller names a line, the output MUST carry `<file>:<line>: <controller text>`. Where it names none, the output MUST carry `<file>: <controller text>`. khi MUST NOT invent a line, work one out by reading the file, or translate one from a step number (Article II).
 - **FR-019**: A file that does not exist MUST be refused by name before connecting.
 - **FR-020**: After a failed or interrupted load, khi MUST say the load did not finish and that the controller's memory may have changed.
-- **FR-021**: When the controller asks a question during `khi load`, khi MUST print it verbatim and hand it to the person: wait without limit (Article X), send exactly the one answer the person types, Enter included as captures (n) and (o) show it, and read on. Ctrl+C typed at the question MUST be passed through as the answer, as capture `c-load-rejected-ctrl-c` shows it. khi MUST NOT answer on its own (Article III, v3.0.0). The exit code follows FR-017. If the console closes or its input ends before an answer, khi MUST close the session, exit non-zero, and say the controller may still be waiting on the question.
+- **FR-021**: When the controller asks a question during `khi load`, khi MUST print it verbatim and hand it to the person: wait without limit (Article X), send exactly the one answer the person types, Enter included as captures (n) and (o) show it, and read on. A Ctrl+C that reaches khi at the question MUST be discarded: it is not an answer and not a quit. khi MUST NOT answer on its own (Article III, v3.0.0). The exit code follows FR-017. If the console closes or its input ends before an answer, khi MUST close the session, exit non-zero, and say the controller may still be waiting on the question.
 
 **Save**
 
@@ -231,6 +231,10 @@ A robot programmer copies the tasks template into a program repository and uses 
 - **FR-025**: With the captures above, the supported forms MUST be `--qualifier P` (`SAVE/P`), `--qualifier FULL` (`SAVE/FULL`), and no qualifier (`SAVE`).
 - **FR-026**: khi MUST write exactly the file the person named: no extension added and no `.bas` backup of the old file. A typed SAVE writes the file the controller announces, under the same protection.
 - **FR-027**: The LOAD or SAVE command khi sends MUST carry the file's bare name, not its path. The path stays on the PC.
+
+**Keys**
+
+- **FR-041**: In `khi load` and `khi save`, as in `khi term` (FR-014), a Ctrl+C that reaches khi MUST be discarded: it MUST NOT be sent to the controller, and it MUST NOT end the run. Copy and paste are VS Code's; khi emulates no KRterm shortcut.
 
 **Result line**
 
@@ -270,13 +274,13 @@ These are the Architect's, word for word, except where the Architect's rulings o
 
 - **INV-7 Fire** (Article VII requires one): reword the controller's text before printing it.
 - **INV-10 — Typed transfers are bounded and safe.** The stand-in goes silent, and separately drops the connection, halfway through a SAVE typed in `khi term`. khi term reports it and exits non-zero, the target is byte-identical to before, and no temporary file remains. Fire: apply the terminal's unlimited wait to the typed transfer.
-- **INV-11 — No answers on the person's behalf.** Replaying the rejected-LOAD capture up to the controller's question, `khi load` prints the question and sends nothing while the test types nothing, past every transfer timeout. When the test types `0` and Enter, or `1` and Enter, exactly those bytes reach the stand-in, and the replay of capture (n) or (o) runs to its end; when the test types Ctrl+C, `03` reaches the stand-in, as in `c-load-rejected-ctrl-c`. Fire: send `1` at the question before the test types. *(Changed on 2026-11-04 with constitution v3.0.0.)*
+- **INV-11 — No answers on the person's behalf.** Replaying the rejected-LOAD capture up to the controller's question, `khi load` prints the question and sends nothing while the test types nothing, past every transfer timeout. When the test types `0` and Enter, or `1` and Enter, exactly those bytes reach the stand-in, and the replay of capture (n) or (o) runs to its end; when the test types Ctrl+C, nothing reaches the stand-in and khi keeps waiting. Fire: send `1` at the question before the test types. *(Changed on 2026-11-04 with constitution v3.0.0.)*
 - **INV-12 — The path stays on the PC.** Given a file named by full path, the command the stand-in records carries only the bare name. Fire: send the full path.
 
 **From the 2026-11-02 rulings:**
 
 - **INV-13**: Removed on 2026-11-04 with `--replace`.
-- **INV-14 — Ctrl+C belongs to the controller.** In `khi term`, Ctrl+C reaches the stand-in unchanged and the session stays open; Ctrl+] ends the session, exits zero, and never reaches the stand-in. Fire: close the session on Ctrl+C.
+- **INV-14 — Ctrl+C never reaches the controller.** In `khi term`, at the prompt and during a typed transfer, and in `khi load` and `khi save`, a Ctrl+C in the input never reaches the stand-in and ends nothing; Ctrl+] ends the `khi term` session, exits zero, and never reaches the stand-in. Fire: relay Ctrl+C. *(Reversed on 2026-11-04: it said Ctrl+C belongs to the controller.)*
 - **INV-15, INV-16**: Removed on 2026-11-04 with `--replace`.
 
 **From the 2026-11-03 rulings:**
@@ -294,7 +298,7 @@ Each was read in both AS Language Reference Manuals, 90209-1022 (E) and 90209-10
 | What | Section |
 |------|---------|
 | Enter `as` at the `login :` message; the `>` prompt follows | 2.6.1 |
-| Ctrl+C cancels the last input line, among the other terminal control keys | 2.4.1 |
+| The terminal control keys typed at the prompt; Ctrl+C among them, which khi never relays | 2.4.1 |
 | SAVE and LOAD use the PC connection; `SAVE file.pg`, `LOAD data01.as` | 2.6.2 |
 | A KRterm session ends from its [Com] [Disconnect] menu; the manuals list no logout command | 2.6.3 |
 | SAVE qualifiers; `/FULL` is all data that can be saved; bare `SAVE` stores five data types in one file | 5.3 |
@@ -345,5 +349,5 @@ The K-IDE manual (20201116) adds two facts: K-ROSET's first robot answers at 127
 - **The tools are on this PC.** K-ROSET 1.8.6.19269, KRterm 1.2.8 and K-IDE are installed; none was started for this spec, and whether K-ROSET needs a licence to run was not checked. No loopback adapter or Npcap is installed, which favours the relay route. Any relay stays within Article XV, and within Article I unless the plan justifies a new project.
 - **Windows only,** because K-ROSET and KRterm are Windows programs.
 - **Keys VS Code keeps for itself never reach khi,** so they cannot be relayed. The plan checks Ctrl+] and the keys in manual section 2.4.1 against this.
-- **khi has no shortcuts of its own besides Ctrl+].** It does not emulate KRterm's (Alt+V paste and the like); copy and paste are VS Code's terminal's.
+- **khi has no shortcuts of its own besides Ctrl+].** It does not emulate KRterm's (Alt+V paste and the like); copy and paste are VS Code's terminal's, and Ctrl+C is copy. A Ctrl+C VS Code passes through is discarded in every verb (FR-014, FR-041).
 - **Out of scope:** `/SEL` and choosing programs by name, `LOAD/Q` at `khi load` (its questions need a person; it can be typed in `khi term`), the `USB_` commands, and removing anything on the controller: `--replace` and every form of DELETE were dropped from this feature on 2026-11-04.

@@ -18,9 +18,9 @@ Each runtime guard also has a test through `KhiApp.Run` (Article XIII).
 | INV-8 Acceptance against K-ROSET | By hand, [quickstart.md P3](../quickstart.md#p3-acceptance-in-vs-code) | Not applicable (acceptance) |
 | INV-9 The constitution | Every review gate shown passing at merge | Not applicable (review) |
 | INV-10 Typed transfers bounded and safe | Protocol, capture (f), silent and closed mid typed SAVE | Apply the terminal's unlimited wait to the typed transfer |
-| INV-11 No answers on the person's behalf | Protocol, capture (c) at the question: nothing sent while the test types nothing, past every transfer timeout; then captures (n) and (o) with `0` and `1` typed, and `c-load-rejected-ctrl-c` with Ctrl+C | Send `1` at the question before the test types |
+| INV-11 No answers on the person's behalf | Protocol, capture (c) at the question: nothing sent while the test types nothing, past every transfer timeout; then captures (n) and (o) with `0` and `1` typed; a Ctrl+C typed there sends nothing | Send `1` at the question before the test types |
 | INV-12 The path stays on the PC | Protocol, capture (b), file given by full path | Send the full path |
-| INV-14 Ctrl+C belongs to the controller | Protocol, capture (a), redirected input carrying 0x03 then 0x1D | Close the session on Ctrl+C |
+| INV-14 Ctrl+C never reaches the controller | Protocol: `khi term` on capture (a) with redirected input carrying 0x03 then 0x1D, and during the typed transfer of capture (f); `khi load` on capture (b) and `khi save` on capture (d) with 0x03 in the input. No 0x03 reaches the stand-in, and only 0x1D ends anything | Relay Ctrl+C |
 | INV-19 A SAVE with an unknown line fails | Protocol, capture (h): the line printed verbatim, the target untouched, exit 1; captures (d), (e) and (g) succeed | Accept any line outside the file data |
 
 INV-13, INV-15, INV-16, INV-17 and INV-18 were removed on 2026-11-04 with `--replace`.

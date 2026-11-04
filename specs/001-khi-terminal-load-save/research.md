@@ -37,7 +37,7 @@ The proof log was not checked in. Captures (a) to (o) follow in the same session
 | A typed SAVE and LOAD inside a session, and a typed LOAD of a missing file | (f), (j) |
 | DELETE/P present, absent, refused, and any confirmation | (k), KRterm; kept, though no 001 behaviour relies on it since `--replace` was dropped |
 | A SAVE onto a file name that already exists: whether the old file's rename to `.bas` travels in the protocol | (m) |
-| What the controller sends after the LOAD question is answered with `0`, and with `1` | (n), (o); Ctrl+C at the question is `c-load-rejected-ctrl-c` |
+| What the controller sends after the LOAD question is answered with `0`, and with `1` | (n), (o). `c-load-rejected-ctrl-c` is kept as a record only: khi never relays Ctrl+C |
 | Whether telnet doubles a 0xFF byte inside file content | (b) and (d), if any file holds one; AS files are expected to be ASCII |
 
 **Rationale**: Article IV. A behaviour no capture shows is recorded as not implemented and reported to the Architect.
@@ -90,14 +90,16 @@ Constitution 2.0.1 makes this test the rule.
 ## R8 Console input and output in `khi term`
 
 **Decision**:
-- **Interactive keys**: With the console interactive, set `Console.TreatControlCAsInput = True` and read keys with `Console.ReadKey(intercept:=True)`. Each key goes to the controller as its byte; Ctrl+C is 0x03. Ctrl+] (0x1D) ends the session and is never sent.
-- **Redirected input**: When input is redirected, as in tests, read raw bytes from standard input. End of input ends the session, and a 0x1D byte is treated like Ctrl+].
-- **An answer during `khi load`**: At a controller question, `khi load` reads the person's answer the same way, keys with `Console.TreatControlCAsInput = True` when interactive and raw bytes when redirected, so Ctrl+C arrives as 0x03 and is sent as the answer (FR-021). It sends what was typed, with Enter as captures (n) and (o) show it, and reads on. End of input before an answer closes the session.
+- **Interactive keys**: With the console interactive, set `Console.TreatControlCAsInput = True` and read keys with `Console.ReadKey(intercept:=True)`. Each key goes to the controller as its byte, with two exceptions: Ctrl+C (0x03) is discarded, so `TreatControlCAsInput` is what keeps it from ending the process, and Ctrl+] (0x1D) ends the session. Neither is ever sent.
+- **Redirected input**: When input is redirected, as in tests, read raw bytes from standard input. End of input ends the session, a 0x1D byte is treated like Ctrl+], and a 0x03 byte is discarded.
+- **An answer during `khi load`**: At a controller question, `khi load` reads the person's answer the same way, keys with `Console.TreatControlCAsInput = True` when interactive and raw bytes when redirected, so a Ctrl+C arrives as 0x03 and is discarded (FR-021). It sends what was typed, with Enter as captures (n) and (o) show it, and reads on. End of input before an answer closes the session.
 - **No shortcuts of khi's own**: khi does not emulate KRterm's shortcuts, such as Alt+V to paste; copy and paste are VS Code's terminal's (Architect, 2026-11-04).
 - **Console closing**: Register `PosixSignal.SIGHUP`, which .NET raises on Windows when the console closes, to close the socket and exit zero.
 - **Output**: The controller's bytes go to the raw standard-output stream, not through a text encoder.
 
-**Rationale**: Article VIII wants output unaltered, and FR-014 wants Ctrl+C relayed and Ctrl+] local.
+- **Ctrl+C outside the console reads**: While `khi load` or `khi save` streams, and before `khi term` reads its first key, a Ctrl+C is cancelled through `Console.CancelKeyPress` with `e.Cancel = True`, so it neither ends the process nor reaches the controller (FR-041).
+
+**Rationale**: Article VIII wants output unaltered, and FR-014 and FR-041 want Ctrl+C discarded and Ctrl+] local (Architect, 2026-11-04, reversing the earlier relay of Ctrl+C).
 
 **To verify in acceptance**: VS Code's integrated terminal passes Ctrl+] and the other keys of manual 2.4.1 through to khi; the editor binds Ctrl+] only while a text editor has focus. The console-close signal reaches khi before VS Code ends the process. If keys are held back, check `terminal.integrated.sendKeybindingsToShell` and report what was needed, as the Architect ruled.
 

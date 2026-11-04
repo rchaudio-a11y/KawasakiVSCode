@@ -57,7 +57,7 @@ INV-8 and User Story 6, against K-ROSET.
 4. Save full again to a second file. **Expected**: the two files match except for the stamped lines, which the implementation lists once the first acceptance run shows them.
 5. Run *khi: Open terminal*. **Expected**:
    - The `>` prompt appears.
-   - Ctrl+C cancels a half-typed line at the prompt.
+   - With nothing selected, Ctrl+C does nothing: no `^C` reaches the controller, and the session stays open. With text selected, it copies.
    - A typed `SAVE x.as` writes `x.as` into the scratch repository's folder.
    - Ctrl+] ends the session with exit code 0.
    - If Ctrl+] or an AS control key does not reach khi, check `terminal.integrated.sendKeybindingsToShell` and report what was needed.

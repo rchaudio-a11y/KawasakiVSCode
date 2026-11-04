@@ -24,7 +24,7 @@ khi save <file> [--qualifier <q>] [--robot <name>]
 
 ## A question during a LOAD (`khi load`)
 
-The controller's question is printed verbatim on stdout. khi then reads the person's answer from the console with no time limit, and sends it as typed, Enter included; Ctrl+C typed there is sent too. khi never answers on its own (FR-021). If the console closes or its input ends first, khi closes the session, exits 1, and says on stderr:
+The controller's question is printed verbatim on stdout. khi then reads the person's answer from the console with no time limit, and sends it as typed, Enter included; a Ctrl+C that reaches khi there is discarded. khi never answers on its own (FR-021). If the console closes or its input ends first, khi closes the session, exits 1, and says on stderr:
 
 ```text
 khi: no answer to the controller's question; robot <name> may still be waiting on it and may need a restart
@@ -88,7 +88,8 @@ khi: robot <name> closed the connection
 
 | Key | Effect |
 |-----|--------|
-| Any key, Ctrl+C included | Sent to the controller as its byte |
+| Any key but Ctrl+C and Ctrl+] | Sent to the controller as its byte |
+| Ctrl+C | VS Code's copy. If VS Code passes it through because nothing is selected, khi discards it: never sent, and not a quit. The same in `khi load` and `khi save` (FR-041) |
 | Ctrl+] | Ends the session and exits 0; never sent |
 | Closing the console, or input ending | Ends the session and exits 0 |
 

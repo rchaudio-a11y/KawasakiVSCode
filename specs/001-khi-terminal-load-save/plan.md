@@ -77,8 +77,8 @@ Checked against constitution v2.0.1 before research, and again after design. Rec
 - **`--replace` is dropped**: on K-ROSET a plain LOAD replaces a program already in memory. The constitution is unchanged; the difference from the manuals is on the spec's live-controller check.
 - **A SAVE with an unknown line fails** (FR-040, INV-19): `SaveLineRule` is the one door that decides whether a line outside the file data is a captured normal line ([research R17](research.md#r17-normal-lines-during-a-save)).
 - **Capture (m)**, a SAVE onto an existing file name, is added before gate G0 lifts.
-- **A question during `khi load`** is handed to the person (FR-021, INV-11): khi prints it, waits without limit, and sends the one answer typed, Ctrl+C included. Constitution v3.0.0 amends Articles III, IV and X for it. Captures (n) and (o), the question answered with `0` and with `1`, are added before gate G0 lifts.
-- **Keys**: khi does not emulate KRterm's shortcuts; copy and paste are VS Code's. Ctrl+C that reaches khi is relayed; Ctrl+] ends the session.
+- **A question during `khi load`** is handed to the person (FR-021, INV-11): khi prints it, waits without limit, and sends the one answer typed. Constitution v3.0.0 amends Articles III, IV and X for it. Captures (n) and (o), the question answered with `0` and with `1`, are added before gate G0 lifts.
+- **Keys**: khi does not emulate KRterm's shortcuts; copy and paste are VS Code's, and Ctrl+C is copy. khi never relays Ctrl+C: when VS Code passes it through, khi discards it in every verb, and it is not a quit (FR-014, FR-041, INV-14). Ctrl+] ends the session. Capture `c-load-rejected-ctrl-c` is kept as a record only.
 
 **Re-check after design**: The design in [data-model.md](data-model.md) and [contracts/](contracts/) adds no project, interface, package or wait beyond those above. Every guard in the invariants has a named test and fire demonstration in [contracts/test-guards.md](contracts/test-guards.md). Pass.
 
