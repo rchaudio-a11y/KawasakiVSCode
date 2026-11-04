@@ -4,7 +4,7 @@
 
 `khi` lets you keep Kawasaki AS robot programs in git and work on them in VS Code. You edit a program there, press a key to load it into the controller, and save the controller's data back into the repository, so a program's history is the branch's history.
 
-> **Status: in development.** Feature 001 is being built. The foundation is done and tested: the connection, the telnet negotiation and login, the robots file, and the commands. `khi load`, `khi save` and `khi term` are **not usable yet**; they are the next stories. See [Status](#status).
+> **Status: in development.** Feature 001 is being built. The foundation and `khi load` are done and tested against the recorded sessions. `khi save` and `khi term` are **not usable yet**; they are the next stories. See [Status](#status).
 
 > **Not affiliated with Kawasaki.** This is an independent tool by RCH Automation LLC. "Kawasaki", "KRterm", "K-ROSET" and "KIDE" are named only to say what this works with.
 
@@ -88,8 +88,8 @@ Feature 001: terminal, LOAD and SAVE from VS Code.
 |---|---|
 | Protocol captures against K-ROSET (E controller) | Done: 19 captures plus 3 extras |
 | Foundation: connection, telnet negotiation, login, commands, robots file, exit codes, result line | Built and tested |
-| `khi load` | Next |
-| `khi save` | Planned |
+| `khi load` | Built and tested against the captures |
+| `khi save` | Next |
 | `khi term` | Planned |
 | VS Code tasks template and install instructions | Planned |
 | A real controller | After 001 is accepted on the simulator |

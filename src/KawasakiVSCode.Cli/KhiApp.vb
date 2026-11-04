@@ -28,6 +28,7 @@ Public NotInheritable Class KhiApp
     Public Shared Function Run(args As String(), input As Stream, output As Stream, errors As TextWriter, timeouts As Timeouts) As Integer
         Try
             Dim parsed As ParsedArguments = ArgumentParser.Parse(args)
+            If parsed.Verb = "load" Then Return LoadVerb.Run(parsed, input, output, errors, timeouts)
             Throw New KhiRefusal(ExitCode.RefusedBeforeConnecting, "khi: " & parsed.Verb & " is not implemented yet")
         Catch refusal As KhiRefusal
             errors.WriteLine(refusal.Message)

@@ -48,6 +48,7 @@ Namespace StandIn
         Private _stopRecord As Integer
         Private _stopFault As StandInFault
         Private _expectMismatch As Boolean
+        Private _accepted As Boolean
         Private _listener As TcpListener
         Private _client As TcpClient
         Private _stream As NetworkStream
@@ -168,6 +169,24 @@ Namespace StandIn
             End Get
         End Property
 
+        ''' <summary>Whether a client connected: False shows a refusal reached nothing (T047).</summary>
+        Public ReadOnly Property Accepted As Boolean
+            Get
+                SyncLock _gate
+                    Return _accepted
+                End SyncLock
+            End Get
+        End Property
+
+        ''' <summary>The commands the client sent, in order, as CommandRecorder reads them (INV-2, INV-12). Read it once the play has ended.</summary>
+        Public ReadOnly Property Commands As IReadOnlyList(Of String)
+            Get
+                SyncLock _gate
+                    Return _recorder.Commands.ToArray()
+                End SyncLock
+            End Get
+        End Property
+
         ''' <summary>Client bytes after the capture's last record, or after a stop: recorded, not compared.</summary>
         Public ReadOnly Property ReceivedAfterEnd As Byte()
             Get
@@ -211,6 +230,7 @@ Namespace StandIn
                 accepted = _listener.AcceptTcpClient()
                 SyncLock _gate
                     _client = accepted
+                    _accepted = True
                 End SyncLock
                 _stream = accepted.GetStream()
                 If PlayRecords(accepted) Then ReadToTheEnd()

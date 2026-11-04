@@ -98,12 +98,11 @@ Namespace Route
             Assert.IsNull(terminal.FilePath)
         End Sub
 
-        ''' <summary>A verb not yet wired is refused with a message saying so, exit 2 (FR-032).</summary>
+        ''' <summary>A verb not yet wired is refused with a message saying so, exit 2 (FR-032). khi load is wired (T064).</summary>
         <TestMethod>
         Public Sub AnUnwiredVerbSaysSo()
             For Each args As String() In New String()() {
                     New String() {"term"},
-                    New String() {"load", "x.as"},
                     New String() {"save", "x.as", "--qualifier", "FULL"}}
                 Dim result As RunResult = Run(args)
                 Assert.AreEqual(2, result.ExitCode, args(0))

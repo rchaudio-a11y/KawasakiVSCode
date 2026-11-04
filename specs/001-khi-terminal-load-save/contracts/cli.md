@@ -37,6 +37,7 @@ khi save <file> [--qualifier <q>] [--robot <name>]
 
   ```text
   khi: <file> does not exist                                  (khi load, FR-019)
+  khi: cannot read <file>: <system reason>                    (khi load: the whole file is read before connecting)
   khi: <file> holds byte <ff|17> at offset <n>; it cannot be sent  (khi load, FR-042; <n> counts from 0)
   khi: <file> has no extension; name the file with one        (khi save, FR-043)
   khi: <file> has a name outside ASCII; it cannot be sent      (khi load and khi save, FR-044)
@@ -53,7 +54,7 @@ khi save <file> [--qualifier <q>] [--robot <name>]
 
 ## A question during a LOAD (`khi load`)
 
-The controller's question is printed verbatim on stdout. A question is a line `(<digit>:<label>, <digit>:<label>)`; any other unrecognised line followed by the controller going quiet for that wait's timeout, with no `>` prompt, is treated the same way. A line followed by the `>` prompt is a refusal: the load fails, exit 1. The question comes with the controller's request for the next block, and khi answers that request as KRterm answers any request, with the file's next block (FR-016; captures (c), (n), (o), (p)); it then sends nothing more of the file until the controller asks again (FR-021). khi then reads the person's answer from the console with no time limit, and sends it as typed, Enter included; a Ctrl+C that reaches khi there is discarded. khi never answers on its own (FR-021). Whichever answer is given, the load exits 1, and the result line names the answer (below). If the console closes or its input ends first, khi closes the session, exits 1, and says on stderr:
+The controller's question is printed verbatim on stdout. A question is a line `(<digit>:<label>, <digit>:<label>)`; any other unrecognised line followed by the controller going quiet for that wait's timeout, with no `>` prompt, is treated the same way. A line followed by the `>` prompt is a refusal: the load fails, exit 1. The question comes with the controller's request for the next block, and khi answers that request as KRterm answers any request, with the file's next block (FR-016; captures (c), (n), (o), (p)); it then sends nothing more of the file until the controller asks again (FR-021). khi then reads the person's answer from the console with no time limit, and sends it as typed, Enter included; a Ctrl+C that reaches khi there is discarded. khi never answers on its own (FR-021). Whichever answer is given, the load exits 1, and the result line names the answer (below). If the console closes, its input ends, or Ctrl+] comes first, khi closes the session, exits 1, and says on stderr (Ctrl+] at a question: Architect, 2026-11-04):
 
 ```text
 khi: no answer to the controller's question; robot <name> may still be waiting on it and may need a restart
@@ -106,6 +107,16 @@ khi: timed out waiting for <step> (robot <name>)
 khi: cannot connect to robot <name> at <address>:<port>: <system reason>
 khi: robot <name> closed the connection
 ```
+
+`khi load` adds, on stderr:
+
+```text
+khi: the controller sent <a <letter> block | a request after the end-of-file block> during the LOAD, which no capture shows   (exit 1)
+khi: the load did not finish and the controller's memory may have changed                                                     (FR-020)
+```
+
+- **The first** is for a transfer block no capture shows, or a request after the end-of-file block (Article IV). It exits 1 (Architect, 2026-11-04).
+- **The second** follows a timeout, a closed connection, or the first message, once `khi load` has sent the LOAD command. A failed connect or login cannot have changed the controller's memory, so it does not follow those (Architect, 2026-11-04). The result line still ends stdout.
 
 `<step>` is the WaitStep wording in [data-model.md](../data-model.md#timeouts-and-waitstep).
 

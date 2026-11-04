@@ -1,7 +1,8 @@
 ' File:        ControllerConnection.vb
 ' Project:     KawasakiVSCode.Core
 ' Description: The TCP connection to one controller: every read has its step's timeout, and bytes leave
-'              khi only through the telnet negotiation and Send (Article III, Article X, research R15).
+'              khi only through the telnet negotiation, Send, SendFrame and PassThrough (Article III,
+'              Article X, research R15).
 ' Author:      RCH Automation LLC
 ' Created:     2026-11-04
 
@@ -13,14 +14,16 @@ Imports System.Threading
 Imports KawasakiVSCode.Core.Commands
 Imports KawasakiVSCode.Core.Reporting
 Imports KawasakiVSCode.Core.Robots
+Imports KawasakiVSCode.Core.Transfer
 
 Namespace Connection
 
     ''' <summary>
-    ''' The connection to one controller. Every read goes through ReadUntil with a named WaitStep and that
-    ''' step's timeout on each read (Article X). Bytes leave khi only through Negotiate, which sends the one
-    ''' telnet offer capture (a) shows, and Send, which takes only a ControllerCommand (Article III). Framing
-    ''' and pass-through content get their doors with the code that sends them (User Story 2).
+    ''' The connection to one controller. Every read goes through ReadUntil or ReadNext with a named WaitStep
+    ''' and that step's timeout on each read (Article X). Bytes leave khi only through Negotiate, which sends
+    ''' the one telnet offer capture (a) shows; Send, which takes only a ControllerCommand (Article III);
+    ''' SendFrame, which takes only a block TransferFraming built; and PassThrough, for content the person
+    ''' typed (research R15).
     ''' </summary>
     Public NotInheritable Class ControllerConnection
         Implements IDisposable
@@ -117,25 +120,63 @@ Namespace Connection
                     Return result
                 End If
                 searched = Math.Max(0, _pending.Count - until.Length + 1)
-                _stream.ReadTimeout = CInt(Math.Min(Integer.MaxValue, Math.Max(1.0, _timeouts.ValueFor(item).TotalMilliseconds)))
-                Dim read As Integer
-                Try
-                    read = _stream.Read(_buffer, 0, _buffer.Length)
-                Catch ex As IOException When IsTimeout(ex)
-                    Throw TimedOut(item, detail, _robot)
-                Catch ex As IOException
-                    Throw Closed()
-                End Try
-                If read = 0 Then Throw Closed()
-                For index As Integer = 0 To read - 1
-                    _pending.Add(_buffer(index))
-                Next
+                Fill(item, detail)
             Loop
         End Function
+
+        ''' <summary>
+        ''' Reads whatever the controller sends next, with the step's timeout: the bytes already read and kept, or
+        ''' else those of the next read. A LOAD reads this way, because a block and the text after it come
+        ''' together, and the text can end at a question with nothing after it (capture (n) record 16).
+        ''' </summary>
+        ''' <param name="item">The step being waited in, named in a timeout message.</param>
+        ''' <param name="detail">The detail Timeouts.Describe takes for the step, or Nothing.</param>
+        ''' <returns>One or more bytes.</returns>
+        ''' <exception cref="KhiRefusal">The step timed out (exit 3), or the controller closed the connection (exit 4).</exception>
+        Public Function ReadNext(item As WaitStep, detail As String) As Byte()
+            If _pending.Count = 0 Then Fill(item, detail)
+            Dim result As Byte() = _pending.ToArray()
+            _pending.Clear()
+            Return result
+        End Function
+
+        ''' <summary>Sends a transfer block; the only blocks are those TransferFraming builds (research R15).</summary>
+        ''' <param name="frame">The block.</param>
+        ''' <exception cref="KhiRefusal">The controller closed the connection (exit 4).</exception>
+        Public Sub SendFrame(frame As TransferFrame)
+            Write(frame.Wire)
+        End Sub
+
+        ''' <summary>
+        ''' Sends content the person typed, unchanged: the answer to a question during khi load, Enter included
+        ''' (Article III, FR-021). It is never a command khi originates.
+        ''' </summary>
+        ''' <param name="bytes">The bytes, as PersonInput gave them.</param>
+        ''' <exception cref="KhiRefusal">The controller closed the connection (exit 4).</exception>
+        Public Sub PassThrough(bytes As Byte())
+            Write(bytes)
+        End Sub
 
         ''' <summary>Closes the connection.</summary>
         Public Sub Dispose() Implements IDisposable.Dispose
             _client.Dispose()
+        End Sub
+
+        ''' <summary>One read, with the step's timeout, adding what came to the bytes kept.</summary>
+        Private Sub Fill(item As WaitStep, detail As String)
+            _stream.ReadTimeout = CInt(Math.Min(Integer.MaxValue, Math.Max(1.0, _timeouts.ValueFor(item).TotalMilliseconds)))
+            Dim read As Integer
+            Try
+                read = _stream.Read(_buffer, 0, _buffer.Length)
+            Catch ex As IOException When IsTimeout(ex)
+                Throw TimedOut(item, detail, _robot)
+            Catch ex As IOException
+                Throw Closed()
+            End Try
+            If read = 0 Then Throw Closed()
+            For index As Integer = 0 To read - 1
+                _pending.Add(_buffer(index))
+            Next
         End Sub
 
         Private Sub Write(bytes As Byte())
