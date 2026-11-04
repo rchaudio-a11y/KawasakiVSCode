@@ -1,6 +1,6 @@
 # Capture (c), extra: reconnecting after a session closed at the LOAD question
 
-**Status**: Draft, for the Architect to confirm.
+**Status**: Confirmed by the Architect, 2026-11-04.
 
 This capture backs capture (c)'s finding that the controller serves no new connection after a session closes at the LOAD question.
 

@@ -1,6 +1,6 @@
 # Capture (i), extra: LOAD of a name already in memory, with different content
 
-**Status**: Draft, for the Architect to confirm.
+**Status**: Confirmed by the Architect, 2026-11-04.
 
 This capture settles what capture (i) could not show: whether a LOAD of a program name already in memory replaces the program or keeps it. It replaces it.
 

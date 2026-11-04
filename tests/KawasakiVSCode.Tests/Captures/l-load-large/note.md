@@ -1,6 +1,6 @@
 # Capture (l): LOAD of a generated program of about 60 KB
 
-**Status**: Draft, for the Architect to confirm.
+**Status**: Confirmed by the Architect, 2026-11-04.
 
 ## What was done
 

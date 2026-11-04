@@ -1,6 +1,6 @@
 # Capture (i): LOAD of a program name already in memory
 
-**Status**: Draft, for the Architect to confirm.
+**Status**: Confirmed by the Architect, 2026-11-04.
 
 ## What was done
 

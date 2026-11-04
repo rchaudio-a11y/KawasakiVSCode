@@ -1,10 +1,10 @@
 # Capture (f): SAVE and LOAD typed in one session
 
-**Status**: Draft, for the Architect to confirm.
+**Status**: Confirmed by the Architect, 2026-11-04.
 
 ## What was done
 
-1. Memory before this session: `capb` (with the content of `../i-load-existing-changed/files/capi.as`), `capl` and `home`, as in captures (d), (e) and (g). During the `i-load-existing-changed` session, the Architect's screenshot showed `capb` as the program selected on the teach pendant; that is the likely reason for observation 4, not proved here.
+1. Memory before this session: `capb` (with the content of `../i-load-existing-changed/files/capi.as`), `capl` and `home`, as in captures (d), (e) and (g). `capb` was the program selected on the teach pendant, as the Architect confirmed on 2026-11-04; that accounts for observation 4.
 2. `capb.as` was in `C:\KawasakiRobot\KRterm`, copied there for capture (b) and checked identical (SHA-256). It is the file in `../b-load-small/files/capb.as`.
 3. KRterm connected through the relay, using its saved TCP connection to 127.0.0.1, port 9101.
 4. At `login: `, the Architect typed `as` and pressed Enter.

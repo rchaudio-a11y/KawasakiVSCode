@@ -1,6 +1,6 @@
 # Capture (e): SAVE/FULL, all data that can be saved
 
-**Status**: Draft, for the Architect to confirm.
+**Status**: Confirmed by the Architect, 2026-11-04.
 
 ## What was done
 

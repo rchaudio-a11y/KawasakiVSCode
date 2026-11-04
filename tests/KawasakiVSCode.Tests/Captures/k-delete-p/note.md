@@ -1,10 +1,10 @@
 # Capture (k): DELETE/P on a present, an absent and a refused program
 
-**Status**: Draft, for the Architect to confirm.
+**Status**: Confirmed by the Architect, 2026-11-04.
 
 ## What was done
 
-1. Memory before this session: `capb`, `capl` and `home`. `home` is the Architect's and was not touched. `capb` was last seen selected on the teach pendant, in the Architect's screenshot during `i-load-existing-changed`; the refusal in observation 7 points the same way.
+1. Memory before this session: `capb`, `capl` and `home`. `home` is the Architect's and was not touched. `capb` was the program selected on the teach pendant, as the Architect confirmed on 2026-11-04.
 2. KRterm connected through the relay, using its saved TCP connection to 127.0.0.1, port 9101.
 3. At `login: `, the Architect typed `as` and pressed Enter.
 4. At `>`, the Architect entered `DELETE/P capl` and pressed Enter; at the confirmation, typed `1` and pressed Enter.
@@ -63,7 +63,7 @@ Records are numbered in the order they appear in `exchange.txt`.
 4. **The confirmation comes even for an absent program**: the controller asked before saying the program did not exist.
 5. **Present, deleted (`capl`)**: after the answer, the controller sent CR LF and `>` (record 16). No message.
 6. **Absent (`nosuch`)**: after the answer, `nosuch:Variable (or program) does not exist.` CR LF `>` (record 24). This is the same text as in capture (h), and **not** "P1038 Program does not exist."
-7. **Refused (`capb`)**: after the answer, CR LF, `Program`, CR LF, `capb             KILL or PCKILL to delete program.` CR LF `>` (record 32). The message is printed without its code.
+7. **Refused (`capb`, selected on the pendant)**: after the answer, CR LF, `Program`, CR LF, `capb             KILL or PCKILL to delete program.` CR LF `>` (record 32). The message is printed without its code.
 8. **Memory after the session**: `DIRECTORY/P` listed `Program`, then ` capb      home   ` (record 36): `capl` was deleted, `capb` was kept, `home` untouched.
 9. **Reply times**: the controller answered every client record within 66 ms (record 2, the telnet answer). Under the plan's rule of three times the longest gap with a 10-second floor, every wait here comes out at 10 s.
 

@@ -1,6 +1,6 @@
 # Capture (h): a SAVE the controller reports an error in
 
-**Status**: Draft, for the Architect to confirm. Not a refusal before the transfer: see observation 3.
+**Status**: Confirmed by the Architect, 2026-11-04. Not a refusal before the transfer: see observation 3.
 
 ## What was done
 
