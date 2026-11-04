@@ -111,8 +111,9 @@ it (Article XVI).
 ### Article X — Bounded Waits
 
 Every wait during connect, login and a LOAD or SAVE transfer has a timeout, so neither transfer verb
-can hang, except the wait for the person's answer to a question during khi load, which is the
-person's, as in the terminal verb. A timeout is reported as a timeout, naming the step that was
+can hang, except the wait for the person's answer to a controller question, which is the person's,
+as in the terminal verb: a question during khi load, and a question during a LOAD or SAVE the person
+typed in the terminal verb. A timeout is reported as a timeout, naming the step that was
 waiting, and leaves the session closed. After login, the terminal verb waits on the person without
 limit. When the person
 ends the session it exits with code zero; if the controller closes the connection, it reports that
@@ -189,7 +190,7 @@ Every plan, task list and implementation review verifies:
 - At a question during khi load, the tool sends only what the person typed, and nothing until they type, asserted by replaying the question capture and checking the bytes sent (Art. III).
 - Every new guard carries its fire demonstration (Art. VII) and a production-route test (Art. XIII).
 - No rule validated at two doors.
-- Every wait during connect, login and transfer has a timeout; the terminal relay after login and the wait for the person's answer to a question during khi load are the only unbounded waits (Art. X).
+- Every wait during connect, login and transfer has a timeout; the terminal relay after login and the wait for the person's answer to a controller question, during khi load or during a transfer typed in the terminal verb, are the only unbounded waits (Art. X).
 - Header block and XML docs on every new or modified file.
 - Any new abstraction justified by three call sites in hand.
 
@@ -206,5 +207,6 @@ obligations, PATCH for wording.
 - **2026-11-02, 1.0.0 to 2.0.0.** Architect approval: given. Rationale: edit-and-reload: LOAD refuses a program name already in memory (AS Language Reference Manual §5.3), so the person can choose to replace; replacement deletes with DELETE/P only (§5.2). Migration path: none — nothing is built.
 - **2026-11-03, 2.0.0 to 2.0.1.** Architect approval: given. Rationale: the VB.NET compiler does not warn on a missing XML comment (probe at plan); enforcement moves to a test. Migration path: none — nothing is built.
 - **2026-11-04, 2.0.1 to 3.0.0.** Architect approval: given. Rationale: on K-ROSET, closing the session at a LOAD question left the controller serving no new connection until it was restarted (captures (c), `c-load-rejected-reconnect`). Handing the question to the person avoids that, and the tool still never answers on its own: Article III hands a question during khi load to the person, Article IV leaves the person's answer outside the article, Article X leaves the wait for that answer without limit, and a review gate asserts the tool sends only what the person typed. Migration path: none — nothing is built.
+- **2026-11-04, 3.0.0 to 3.1.0.** Architect approval: given. Rationale: a controller question can come during a LOAD or SAVE the person typed in khi term; the person answers it at the terminal, as at a question during khi load, so the wait for that answer is the person's and has no limit. Every other wait inside a typed transfer keeps its timeout. Migration path: none — typed-transfer handling is not built.
 
-**Version**: 3.0.0 | **Ratified**: 2026-11-02 | **Last Amended**: 2026-11-04
+**Version**: 3.1.0 | **Ratified**: 2026-11-02 | **Last Amended**: 2026-11-04
