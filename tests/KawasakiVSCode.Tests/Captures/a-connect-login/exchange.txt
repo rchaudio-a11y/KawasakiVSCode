@@ -1,0 +1,10 @@
+# khi capture 1
+# relay listen=9101 target=127.0.0.1:9105
+C 0.000 ff fb 18  |...|
+S 0.052 ff fd 18 6c 6f 67 69 6e 3a 20  |...login: |
+C 1.445 61  |a|
+S 1.462 61  |a|
+C 1.561 73  |s|
+S 1.562 73  |s|
+C 2.894 0d 0a  |..|
+S 2.930 0a 54 68 69 73 20 69 73 20 41 53 20 6d 6f 6e 69 74 6f 72 20 74 65 72 6d 69 6e 61 6c 20 22 41 55 58 32 22 0d 0a 3e  |.This is AS monitor terminal "AUX2"..>|
