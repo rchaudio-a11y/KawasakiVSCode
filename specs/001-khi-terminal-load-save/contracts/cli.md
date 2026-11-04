@@ -39,6 +39,7 @@ khi save <file> [--qualifier <q>] [--robot <name>]
   khi: <file> does not exist                                  (khi load, FR-019)
   khi: <file> holds byte <ff|17> at offset <n>; it cannot be sent  (khi load, FR-042; <n> counts from 0)
   khi: <file> has no extension; name the file with one        (khi save, FR-043)
+  khi: <file> has a name outside ASCII; it cannot be sent      (khi load and khi save, FR-044)
   ```
 - **Unwired verbs and options**: any not yet built is refused with `khi: <verb or option> is not implemented yet`.
 - **Qualifiers**: `<q>` is written as the manual writes it without the slash: `P` or `FULL`. Leaving out `--qualifier` sends a bare `SAVE`.

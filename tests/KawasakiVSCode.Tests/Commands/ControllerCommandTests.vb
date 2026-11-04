@@ -9,6 +9,7 @@ Imports System.Linq
 Imports System.Text
 Imports KawasakiVSCode.Core.Commands
 Imports KawasakiVSCode.Core.Connection
+Imports KawasakiVSCode.Core.Reporting
 Imports KawasakiVSCode.Core.Session
 Imports KawasakiVSCode.Tests.Connection
 Imports KawasakiVSCode.Tests.StandIn
@@ -41,6 +42,33 @@ Namespace Commands
             Assert.AreEqual("SAVE capd.as", ControllerCommand.Save(SaveQualifier.Parse(Nothing), "capd.as").Line)
             Assert.AreEqual("SAVE/P capd.as", ControllerCommand.Save(SaveQualifier.Parse("P"), "C:\backup\capd.as").Line)
             Assert.AreEqual("SAVE/FULL capd.as", ControllerCommand.Save(SaveQualifier.Parse("FULL"), "capd.as").Line)
+        End Sub
+
+        ' Fire demonstration (Article VII), 2026-11-04: made ControllerCommand.BareName accept every character;
+        ' this test failed with "C:\cells\çapb.as was not refused". Restored the file; it passed.
+        ''' <summary>
+        ''' A bare name with a character outside ASCII is refused by name before connecting, exit 2 (FR-044). A
+        ''' folder outside ASCII is never sent, so it is not refused.
+        ''' </summary>
+        <TestMethod>
+        Public Sub ANameOutsideAsciiIsRefused()
+            Dim loadPath As String = "C:\cells\" & ChrW(&HE7) & "apb.as"
+            Dim savePath As String = "r" & ChrW(&HE9) & "sum" & ChrW(&HE9) & ".as"
+            Dim cases As New Dictionary(Of String, Action) From {
+                {loadPath, Sub() ControllerCommand.Load(loadPath)},
+                {savePath, Sub() ControllerCommand.Save(SaveQualifier.Parse("P"), savePath)}}
+            For Each item As KeyValuePair(Of String, Action) In cases
+                Dim refusal As KhiRefusal = Nothing
+                Try
+                    item.Value.Invoke()
+                Catch ex As KhiRefusal
+                    refusal = ex
+                End Try
+                Assert.IsNotNull(refusal, item.Key & " was not refused")
+                Assert.AreEqual(ExitCode.RefusedBeforeConnecting, refusal.ExitCode, item.Key)
+                Assert.AreEqual("khi: " & item.Key & " has a name outside ASCII; it cannot be sent", refusal.Message)
+            Next
+            Assert.AreEqual("load capb.as", ControllerCommand.Load("C:\Z" & ChrW(&HFC) & "rich\capb.as").Line)
         End Sub
 
         ''' <summary>

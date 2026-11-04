@@ -143,6 +143,7 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
   - `ControllerCommand.Load("C:\cells\capb.as")` reads `load capb.as`: the bare name (FR-027).
   - `ControllerCommand.Save` gives `SAVE capd.as`, `SAVE/P capd.as` and `SAVE/FULL capd.as`.
   - Against the stand-in replaying (i) records 1 to 12, `Send` sends the line, waits for its echo, then sends `18`, the line and `0d 0a`, and returns at `>` + line + `0d 0a` (D1).
+  - A bare name outside ASCII is refused by name, exit 2; a folder outside ASCII is not (FR-044; Architect, 2026-11-04). Fire: accept every character.
 - [x] T029 Implement `src/KawasakiVSCode.Core/Commands/ControllerCommand.vb` and `ControllerConnection.Send(command)` (D1): the line, `ReadUntil(CommandReply)` for its echo, then `18` + line + `0d 0a`, then `ReadUntil(CommandReply)` for `>` + line + `0d 0a`, as `specs/001-khi-terminal-load-save/data-model.md`'s `ControllerCommand` table gives them
 - [x] T030 [P] Write `tests/KawasakiVSCode.Tests/Commands/SaveQualifierTests.vb` (FR-024, FR-025):
   - No qualifier gives `SAVE`, `P` gives `SAVE/P`, and `FULL` gives `SAVE/FULL`, as the manual writes them.
@@ -212,13 +213,13 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
   - (q): `tests/KawasakiVSCode.Tests/Captures/q-load-empty/files/capq.as`, 0 bytes.
   - (r): `tests/KawasakiVSCode.Tests/Captures/r-load-long-error-0/files/capr.as`, of (p)'s kind under the name `capr`. The question is answered with `0`.
   - (s): `tests/KawasakiVSCode.Tests/Captures/s-load-1024/files/caps.as`, exactly 1,024 bytes, with no error.
-- [ ] T045 [US1] Write `tests/KawasakiVSCode.Tests/Conformance/CaptureInventoryTests.vb` ([contracts/capture-format.md](contracts/capture-format.md#notemd)):
+- [x] T045 [US1] Write `tests/KawasakiVSCode.Tests/Conformance/CaptureInventoryTests.vb` ([contracts/capture-format.md](contracts/capture-format.md#notemd)):
   - For each letter (a) to (s), a folder `<letter>-*` exists.
   - Every capture folder has an `exchange.txt` that `CaptureReader` reads.
   - Every `note.md` has a `**Status**:` line reading `Confirmed by the Architect`, and the headings What was done, Against what, Tools, Route, Date, Payload regions, Typed regions, Observations and Manual citations.
   - The SAVE captures (d), (e), (f), (g), (h) and (m) hold in `files/` the file KRterm wrote.
   - Fire: rename one heading in one note.
-- [ ] T046 [P] [US1] Write in `specs/001-khi-terminal-load-save/research.md` R2 the answer each capture gave, citing its note:
+- [x] T046 [P] [US1] Write in `specs/001-khi-terminal-load-save/research.md` R2 the answer each capture gave, citing its note:
   - (a): the telnet options and the login.
   - (b) and (l): the LOAD framing and the 512-byte block.
   - (c): the rejected step is named by step, not by line.
@@ -275,6 +276,7 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
   - Fires: send `1` at the question before the test types (INV-11); reword the controller's text (INV-7).
 - [ ] T054 [P] [US2] Write `tests/KawasakiVSCode.Tests/Route/LoadRouteTests.vb` through `KhiApp.Run`:
   - A missing file is refused by name before connecting, exit 2 (FR-019).
+  - A file name outside ASCII is refused by name before connecting, exit 2 (FR-044).
   - With nothing listening, exit 4.
   - INV-5: capture (b) silent at record 36 gives exit 3 naming "transfer data".
   - Capture (b) closed at record 38 gives exit 4, the FR-020 message `the load did not finish and the controller's memory may have changed`, and the result line.
@@ -337,7 +339,7 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
   - **The fallback** (D3): when a wait that follows an error line runs out with no `>` prompt, the line goes to the person as a question instead of timing out.
   - **Waits**: every other wait is bounded by its `WaitStep`.
 - [ ] T064 [US2] Implement `src/KawasakiVSCode.Cli/LoadVerb.vb` and wire it in `src/KawasakiVSCode.Cli/KhiApp.vb`:
-  - **Before connecting**: refuse a missing file (FR-019); refuse a file holding `ff` or `17`, naming the file, the byte and the offset from 0 of the first one (FR-042, U2); and resolve the robot.
+  - **Before connecting**: refuse a missing file (FR-019); refuse a file holding `ff` or `17`, naming the file, the byte and the offset from 0 of the first one (FR-042, U2); build the `ControllerCommand`, which refuses a name outside ASCII (FR-044); and resolve the robot.
   - **Run**: connect, log in, and run `LoadOperation`.
   - **Error lines**: print `<file>: <line>` for each error line (FR-018).
   - **Exit**: 0 only on `(0 errors)` with no question asked (FR-017).
@@ -375,6 +377,7 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
 - [ ] T069 [P] [US3] Write `tests/KawasakiVSCode.Tests/Transfer/SaveLineRuleTests.vb` (research R17): every line outside the `D` blocks in captures (d), (e), (f), (g) and (m) is normal; `nosuch:Variable (or program) does not exist.` from capture (h) is not; a `D` block whose payload holds `ff` is treated as unknown (FR-040). Fire: accept any line
 - [ ] T070 [P] [US3] Write `tests/KawasakiVSCode.Tests/Route/SaveRouteTests.vb` through `KhiApp.Run`:
   - An unsupported qualifier is refused by name before connecting (FR-024).
+  - A target name outside ASCII is refused by name before connecting, exit 2 (FR-044).
   - A missing target folder is refused before connecting, naming the path.
   - A target held open by another process gives exit 5 after the replay of (d), with the target byte-identical and no temporary file (research R10).
   - A `03` in the input during the transfer ends nothing (FR-041).
@@ -405,7 +408,7 @@ These pass on an empty code base, which is not Red. Each is shown red by its fir
   - **Failure**: with any unknown line, the save fails once the transfer has ended.
   - **Waits**: every wait is bounded by its `WaitStep`.
 - [ ] T076 [US3] Implement `src/KawasakiVSCode.Cli/SaveVerb.vb` and wire it in `src/KawasakiVSCode.Cli/KhiApp.vb`:
-  - **Before connecting**: the qualifier goes through `SaveQualifier.Parse`; a missing target folder is refused; and a target with no extension is refused by name (FR-043, U4).
+  - **Before connecting**: the qualifier goes through `SaveQualifier.Parse`; a missing target folder is refused; a target with no extension is refused by name (FR-043, U4); and the `ControllerCommand` is built, which refuses a name outside ASCII (FR-044).
   - **Commit**: only on completion with no unknown line (FR-022, FR-023, FR-040).
   - **Exit**: 1 on unknown lines, 3 on a timeout, 4 on a dropped connection, 5 on a failed replace.
   - **Result line**: `programs` from the `Program <name>` lines, and the bytes written (FR-028).
